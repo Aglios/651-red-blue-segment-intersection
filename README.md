@@ -1,7 +1,7 @@
 # 651-red-blue-segment-intersection
 Shengtan Mao
 
-### Poject description
+### Project description
 Given red and blue segments in 2-dimensional space, such that the red segments do not intersect themselves, and the blue segments do not intersect themselves, we seek to find all intersections between the blue and red segments. In particular, we use method that avoids explicitly calculating the coordinates of the intersections and instead depends on keep track of the ordering of the segments to determine the intersections.
 
 0. Before the actual algorithm, a brute force algorithm is implemented. This checks all possible pairings of red with blue segments to count how many intersections there are. The intersections here are checked by applying the orientation determinant several times. This algorithm is very inefficient since it needs to check all possible pairings.
