@@ -1,7 +1,7 @@
 # 651-red-blue-segment-intersection
 Shengtan Mao
 
-### Project description
+### Poject description
 Given red and blue segments in 2-dimensional space, such that the red segments do not intersect themselves, and the blue segments do not intersect themselves, we seek to find all intersections between the blue and red segments. In particular, we use method that avoids explicitly calculating the coordinates of the intersections and instead depends on keep track of the ordering of the segments to determine the intersections.
 
 0. Before the actual algorithm, a brute force algorithm is implemented. This checks all possible pairings of red with blue segments to count how many intersections there are. The intersections here are checked by applying the orientation determinant several times. This algorithm is very inefficient since it needs to check all possible pairings.
@@ -11,7 +11,7 @@ Given red and blue segments in 2-dimensional space, such that the red segments d
 4. The third algorithm aims to find all intersections between red and blues. This time we keep active segments as an array of arrays(more ideal data structure would be a bundle tree). Each bundle will be the same color, and neighboring bundles should be opposite colors. Like before, active segments are kept in order of aboveness. When we process a flag, we read sb, sa, ob, oa, and find them in the active segments. If we find That sb is above oa or ob is above sa, we know that the event point exists in two distinct locations in the active segments, and thus witnessed intsersection(s). We have to reorder the bundles in between so the two distinct locations coincide. We do this by swapping and merging the bundles in between, and every time we swap we report intersections between every segment of the two bundles.
 
 ### Completed
-Steps 0 to 3 outlined above are finished with all degeneracy handling included. Step 4 is attempted, but not finished. My previous understanding of the algorithm was incorrect, so I hope the code I have now has the correct idea, but even then there is a large number of bugs. A main source of bugs may be I am trying to use arrays instead of better suited data structures like bundle trees. The double indices in particular were hard to deal with. I did not have time to consider boolean operations or clipping as I originally planned.
+Steps 0 to 3 outlined above are finished with all degeneracy handling included. Step 4 is attempted, but not finished. My previous understanding of the algorithm was incorrect, so I hope the code I have now has the correct idea, but even then there is a large number of bugs. A main source of bugs may be I am trying to using arrays instead of better suited data structures like bundle trees. The double indices in particular were hard to deal with. I did not have time to consider boolean operations or clipping as I originally wanted.
 
 ### Reflection
 The algorithms can be improved in several ways. Most notably, using appropriate data structures will likely make important parts of the algorithm more efficient and easier to read. I have a good understanding of how this algorithm works, and I understand the main advantage of this algorithm: not requiring extra precision to calculate the coordinate of intersections. The most difficult part was step 4 in the outline above. It is an assembly of many smaller algorithms that are hard to verify correctness out of context, and therefore is prone to bugs. 
