@@ -15,8 +15,6 @@ class Tree:
         else:
             self.max=treeNode.findMax().seg
             
-        self.size=len(self.inorder())
-            
     #class method to create a tree for a single segment 
     def fromSeg(seg):
         return Tree(Node(seg), seg, seg)
@@ -90,7 +88,6 @@ class Tree:
       
     # insert a segue into the tree
     def insert(self, seg):
-        self.size+=1
         y = None
         x = self.root
 
@@ -187,7 +184,6 @@ class Tree:
     #input:seg
     #output:self if successfully deleted
     def delete(self,seg):
-        self.size-=1
         [segnode,rightroot]=self.__splitNode(seg)
         if segnode.left != None:
             self.root=segnode.left
@@ -215,7 +211,6 @@ class Tree:
         assert self.max<other.min
         self.__joinNodes(other.root)
         self.max=other.max
-        self.size=self.size+other.size
         return self
         
     #input: seg to make the split
