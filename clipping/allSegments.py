@@ -10,7 +10,18 @@ class AllSegments:
         self.red=[]
         self.blue=[]
         self.flags=[]
+        self.intList=[]
+        self.totalInt=0
         self.max=0
+
+    def clear(self):
+        self.red=[]
+        self.blue=[]
+        self.flags=[]
+        self.intList=[]
+        self.totalInt=0
+        self.max=0
+
     #adding segments 
     def addRed(self,px,py,qx,qy):
         m=max(abs(px),abs(py),abs(qx),abs(qy))
@@ -70,11 +81,26 @@ class AllSegments:
         plt.axis('equal')
         plt.show()
 
+    def prtIntsec(self,index=-1):
+        intsec=self.intList[index]
+        for i in range(len(intsec)):
+            intsec[i][0].prt()
+            intsec[i][1].prt()
+            print(' ')
+
     #sweeps the ordered flags
-    def sweep(self):
+    def sweep(self,expectedInt):
         bl=BundleList(self.max+1)
         self.sortFlags()
         for i in range(len(self.flags)):
-            bl.procFlag(self.flags[i])
-            bl.plot()
-            plt.show()
+            intsec=bl.procFlag(self.flags[i])
+            self.totalInt+=len(intsec)
+#            self.intList.append(intsec)
+#            self.prtIntsec()
+#            bl.plot()
+#            plt.show()
+        if self.totalInt==expectedInt:
+            print('matches expected intersections')
+            return True
+        print('does not match expected intersections')
+        return False

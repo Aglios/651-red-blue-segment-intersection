@@ -63,6 +63,15 @@ class Bundle:
             self.setNone()
         return self
     
+    def pairs(self,other,intsec):
+        A=self.tree.inorder()
+        B=other.tree.inorder()
+        for i in range(len(A)):
+            for j in range(len(B)):
+                intsec.append((A[i],B[j]))
+        return intsec
+
+
     def insert(self,seg):
         assert seg.color==self.color
         return self.tree.insert(seg)
@@ -73,16 +82,16 @@ class Bundle:
     def min(self):
         return self.tree.min
     def isEmpty(self):
-        return self.tree==None and self.color==None and self.abv==None and self.bel==None
+        return self.tree==None
     def size(self):
         return self.tree.size
     
     def plot(self):
         l=self.tree.inorder()
         for i in range(len(l)-1,-1,-1):
-            l[i].prt()
+#            l[i].prt()
             l[i].plot()
-        print(' ')
+        #print(' ')
         plt.axis('equal')
         
     def prt(self):
