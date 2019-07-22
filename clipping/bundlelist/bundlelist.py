@@ -70,11 +70,16 @@ class BundleList:
                 return [bundle,bundle]
             elif direc==1:
                 node=node.predecessor()
-                [t1,t2]=bundle.split(node.seg)
+                if node==None:
+                    [t1,t2]=[None,bundle.tree]
+                else:
+                    [t1,t2]=bundle.split(node.seg)
             else:
                 [t1,t2]=bundle.split(node.seg)
         #bundle set to the lower split
-        if t2==None:
+        if t1==None:
+            return [Bundle(),bundle]
+        elif t2==None:
             B=Bundle()
         else:
             B=Bundle(t2,bundle,top)
@@ -192,7 +197,7 @@ class BundleList:
             botHi=self.swap(botHi,intsec)
         #swap botHi but still keeping topLo (else topLo will be lost in the swap)
         botHi=self.swap(botHi,intsec)
-        topLo=botHi.bel #SM: why does this not give topLo.abv==botHi
+        topLo=botHi.bel
         assert not topLo.isEmpty()
         assert topLo.abv==botHi
         assert topLo==botHi.bel
@@ -240,9 +245,17 @@ class BundleList:
     def procFlag(self,flag):
         intsec=[]
         [botLo,botHi,topLo,topHi]=self.findLoHi(flag)
+        if topLo.isEmpty():
+#            print('topLo empty')
+            assert not topHi.isEmpty()
+            topLo=topHi
         if topHi.isEmpty():
+#            print('topHi empty')
+            assert not topLo.isEmpty()
             topHi=topLo
-#            print("empty split")
+        sameTop=False
+        if topHi==topLo:
+            sameTop=True
         case=self.checkCase(botLo,botHi,topLo,topHi)
 #        print(cases[case])
         if case==0:
@@ -257,7 +270,9 @@ class BundleList:
                 self.procEnd(flag,botHi,topLo,topHi)
         else:
             [botHi,topLo]=self.swapBotHi(botHi,topLo,intsec)
-            assert self.checkCase(botLo,botHi,topLo,topHi)==1
+            if sameTop:
+                topHi=topLo
+            assert self.checkCase(botLo,botHi,topLo,topHi)!=2
             if flag.type==0:
                 self.procStart1(flag,botHi,topLo)
             else:

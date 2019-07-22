@@ -6,12 +6,13 @@ import matplotlib.pyplot as plt
 
 #for building segments
 class AllSegments:
-    def __init__(self):
+    def __init__(self,expectedInt):
         self.red=[]
         self.blue=[]
         self.flags=[]
         self.intList=[]
         self.totalInt=0
+        self.eint=expectedInt
         self.max=0
 
     def clear(self):
@@ -89,7 +90,7 @@ class AllSegments:
             print(' ')
 
     #sweeps the ordered flags
-    def sweep(self,expectedInt):
+    def sweep(self):
         bl=BundleList(self.max+1)
         self.sortFlags()
         for i in range(len(self.flags)):
@@ -99,8 +100,16 @@ class AllSegments:
 #            self.prtIntsec()
 #            bl.plot()
 #            plt.show()
-        if self.totalInt==expectedInt:
+        if self.totalInt==self.eint:
             print('matches expected intersections')
             return True
         print('does not match expected intersections')
         return False
+
+    def sweepDetails(self):
+        bl=BundleList(self.max+1)
+        self.sortFlags()
+        for i in range(len(self.flags)):
+            bl.procFlag(self.flags[i])
+            bl.plot()
+            plt.show()

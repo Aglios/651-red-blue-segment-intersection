@@ -26,6 +26,15 @@ class Bundle:
         self.abv=None
         self.bel=None
         self.color=None
+        return self
+
+    #set fields to other's fields
+    def setTo(self,other):
+        self.tree=other.tree
+        self.abv=other.abv
+        self.bel=other.bel
+        self.color=other.color
+        return self
     
     def __flagTestHelper(self,node,flag):
         cmp=flag.cmpSeg(node.seg)
@@ -89,9 +98,9 @@ class Bundle:
     def plot(self):
         l=self.tree.inorder()
         for i in range(len(l)-1,-1,-1):
-#            l[i].prt()
+            l[i].prt()
             l[i].plot()
-        #print(' ')
+        print(' ')
         plt.axis('equal')
         
     def prt(self):
