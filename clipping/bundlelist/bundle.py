@@ -26,6 +26,7 @@ class Bundle:
         self.abv=None
         self.bel=None
         self.color=None
+    
     def __flagTestHelper(self,node,flag):
         cmp=flag.cmpSeg(node.seg)
         if cmp<0:
@@ -44,31 +45,16 @@ class Bundle:
     def flagTest(self,flag):
         return self.__flagTestHelper(self.tree.root,flag)
     
-    #input: flag, direc direction to include (1 includes up, 0 includes down)
-    #output: splits the bundle at the flag
-    def split(self,flag,direc):
-        [node,d]=self.flagTest(flag)
-        if d==-1:
-            node=node.predecessor()
-            [t1,t2]=self.tree.splitTree(node.seg)
-        elif d==1:
-            [t1,t2]=self.tree.splitTree(node.seg)
-        else:
-            if self.tree.root.left==None and self.tree.root.right==None:
-                return [self,self]
-            elif direc==1:
-                node=node.predecessor()
-                [t1,t2]=self.tree.splitTree(node.seg)
-            else:
-                [t1,t2]=self.tree.splitTree(node.seg)
-        self.tree=t1
-        return [self,Bundle(t2)]
+    def split(self,seg):
+        return self.tree.splitTree(seg)
+    
     #input:other bundle
     #output:join other bundle into self, delete other bundle
     def join(self,other):
         self.tree=self.tree.joinTrees(other.tree)
         other.setNone()
         return self
+
     #input: segment
     #output: delete segment from bundle
     def delete(self,seg):
@@ -76,17 +62,7 @@ class Bundle:
         if self.tree.root==None:
             self.setNone()
         return self
-    #input: other bundle, instersections
-    #output: all ordered pairs of segments in self * other
-    def pairs(self,other,intsec):
-        A=self.tree.inorder()
-        B=other.tree.inorder()
-        for i in range(len(A)):
-            for j in range(len(B)):
-                intsec.append((A,B))
-        return intsec
-
-
+    
     def insert(self,seg):
         assert seg.color==self.color
         return self.tree.insert(seg)
@@ -97,7 +73,9 @@ class Bundle:
     def min(self):
         return self.tree.min
     def isEmpty(self):
-        return self.tree==None
+        return self.tree==None and self.color==None and self.abv==None and self.bel==None
+    def size(self):
+        return self.tree.size
     
     def plot(self):
         l=self.tree.inorder()

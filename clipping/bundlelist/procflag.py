@@ -35,4 +35,3 @@ def procFlag(flag,bl):
                         bl.procEnd(flag,botHi,topLo,topHi)
         assert bl.checkColor()
         return intsec
-

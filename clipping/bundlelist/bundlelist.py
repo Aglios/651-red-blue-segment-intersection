@@ -33,17 +33,6 @@ class BundleList:
             color = 1-color
             cur=cur.bel
         plt.show()
-    
-    #output: checks if bundlelist has alternating colors
-    def checkColor(self):
-        color=1
-        cur=self.highest
-        while cur!=None:
-            if cur.color!=color:
-                return False
-            color = 1-color
-            cur=cur.bel
-        return True
         
     #input:segment,bundle A it is being inserted after
     #output: add the segment as bundle B after bundle A
@@ -60,18 +49,32 @@ class BundleList:
     #output: splits the tree at the flag, maintains abv and bel bundles
     #will temporarily break bundleList color invariant
     def split(self,flag,bundle,direc):
-        #bot<A<top to bot<A<B<top
-        print("split")
+        #bot<bundle<top to bot<bundle<B<top
         top=bundle.abv
-        [A,B]=bundle.split(flag,direc)
-        if B.isEmpty():
-            return [A,B]
+        [node,d]=bundle.flagTest(flag)
+#        print('splitting',d)
+        if d==-1:
+            node=node.predecessor()
+            [t1,t2]=bundle.split(node.seg) #dispatch to bundle
+        elif d==1:
+            [t1,t2]=bundle.split(node.seg)
         else:
-            A.abv=B
-            B.bel=A
-            B.abv=top
+            if bundle.tree.root.left==None and bundle.tree.root.right==None:
+                return [bundle,bundle]
+            elif direc==1:
+                node=node.predecessor()
+                [t1,t2]=bundle.split(node.seg)
+            else:
+                [t1,t2]=bundle.split(node.seg)
+        #bundle set to the lower split
+        if t2==None:
+            B=Bundle()
+        else:
+            B=Bundle(t2,bundle,top)
+            bundle.tree=t1
+            bundle.abv=B
             top.bel=B
-            return [A,B]
+        return [bundle,B]
     
     #input: bundle A
     #output: if of same color: A joined with one above, the one above's fields are set to None
@@ -105,15 +108,13 @@ class BundleList:
             self.join(bot)
         return bundle
     
-    #input:bundle A, intersections
-    #output:swap A with the one above. Join if necessary; update intsersections
+    #input:bundle A
+    #output:swap A with the one above. Join if necessary
     #yet to report intersections
-    def swap(self,A,intsec):
-        print("swap")
+    def swap(self,A):
         #bot<A<B<top to bot<B<A<top
         B=A.abv
-        A.pairs(B,intsec)
-
+        print(A.size()*B.size(), "intersections")
         bot=A.bel
         top=B.abv
         
@@ -175,14 +176,14 @@ class BundleList:
             assert botHi<topLo
             return 2
     
-    #input:botHi,topLo, intersections where botHi<topLo
-    #output:swap botHi until botHi>topLo, updates intersections
-    def swapBotHi(self,botHi,topLo,intsec):
+    #input:botHi,topLo where botHi<topLo
+    #output:swap botHi until botHi>topLo
+    def swapBotHi(self,botHi,topLo):
         assert botHi<topLo
         while botHi.abv.abv<topLo:
-            botHi=self.swap(botHi,intsec)
+            botHi=self.swap(botHi)
         #swap botHi but still keeping topLo (else topLo will be lost in the swap)
-        botHi=self.swap(botHi,intsec)
+        botHi=self.swap(botHi)
         topLo=botHi.bel #SM: why does this not give topLo.abv==botHi
         assert not topLo.isEmpty()
         assert topLo.abv==botHi
@@ -225,3 +226,30 @@ class BundleList:
             assert topLo.contains(flag.seg)
             self.delete(flag.seg,topLo)
             return topLo
+    
+    #input: flag
+    #output: process the flag for sweep line, returns the bundle where the seg is added/removed
+    def procFlag(self,flag):
+        [botLo,botHi,topLo,topHi]=self.findLoHi(flag)
+        if topHi.isEmpty():
+            topHi=topLo
+#            print("empty split")
+        case=self.checkCase(botLo,botHi,topLo,topHi)
+        print('case',case)
+        if case==0:
+            if flag.type==0:
+                return self.procStart0(flag,topLo,topHi)
+            else:
+                return self.procEnd(flag,botHi,topLo,topHi)
+        elif case==1:
+            if flag.type==0:
+                return self.procStart1(flag,botHi,topLo)
+            else:
+                return self.procEnd(flag,botHi,topLo,topHi)
+        else:
+            [botHi,topLo]=self.swapBotHi(botHi,topLo)
+            assert self.checkCase(botLo,botHi,topLo,topHi)==1
+            if flag.type==0:
+                return self.procStart1(flag,botHi,topLo)
+            else:
+                return self.procEnd(flag,botHi,topLo,topHi)

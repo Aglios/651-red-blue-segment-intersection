@@ -1,7 +1,6 @@
 from .basic.segment import Segment
 from .basic.flag import Flag
 from .bundlelist.bundlelist import BundleList
-from .bundlelist.procflag import procFlag
 
 import matplotlib.pyplot as plt
 
@@ -75,8 +74,7 @@ class AllSegments:
     def sweep(self):
         bl=BundleList(self.max+1)
         self.sortFlags()
-        intList=[]
         for i in range(len(self.flags)):
-            intList.append(procFlag(self.flags[i],bl))
+            bl.procFlag(self.flags[i])
             bl.plot()
             plt.show()
