@@ -4,6 +4,8 @@ from .bundle import Bundle
 #case0: botHi>topLo and botHi>topHi
 #case1: botHi>topLo and botHi<topHi
 #case2: botHi<topLo
+
+cases=['overlap -> containment','overlap -> no containment','no overlap -> requires swapping']
 class BundleList:
     def __init__(self,rang): # blue over red
         redMin=Bundle.fromCoord(-rang,-rang,rang,-rang,0)
@@ -25,14 +27,19 @@ class BundleList:
         self.highest=blueMax
     
     def plot(self):
+        cur=self.highest
+        while cur!=None:
+            cur.plot()
+            cur=cur.bel
+        plt.show()
+
+    def checkColor(self):
         color=1
         cur=self.highest
         while cur!=None:
-#            assert cur.color==color
-            cur.plot()
+            assert cur.color==color
             color = 1-color
             cur=cur.bel
-        plt.show()
         
     #input:segment,bundle A it is being inserted after
     #output: add the segment as bundle B after bundle A
@@ -63,11 +70,16 @@ class BundleList:
                 return [bundle,bundle]
             elif direc==1:
                 node=node.predecessor()
-                [t1,t2]=bundle.split(node.seg)
+                if node==None:
+                    [t1,t2]=[None,bundle.tree]
+                else:
+                    [t1,t2]=bundle.split(node.seg)
             else:
                 [t1,t2]=bundle.split(node.seg)
         #bundle set to the lower split
-        if t2==None:
+        if t1==None:
+            return [Bundle(),bundle]
+        elif t2==None:
             B=Bundle()
         else:
             B=Bundle(t2,bundle,top)
@@ -81,33 +93,41 @@ class BundleList:
             #else do nothing
     #only need to worry about losing topLo
     def join(self,A):
-        #bot<A<B<top
+        #bot<A<B<top to bot<A<top
+        assert A.abv!=None
         if A.color!=A.abv.color:
-#            print ("Error: attempted join of opposite colors") #JSS
+#            print ("Error: attempted join of opposite colors")
             return A
-        return A.join()
+#        print("join")
+        B=A.abv
+        top=B.abv
+        A=A.join(B)
+        
+        A.abv=top
+        top.bel=A
+        return A
     
     #input: segment and bundle
     #output: deletes seg from bundle. if the bundle becomes empty, remove it from the list
     def delete(self,seg,bundle):
-        if bundle.tree.root.left==None and bundle.tree.root.right==None:
-            bot=bundle.bel
-            top=bundle.abv
-            bundle.setNone()
+#        print("delete")
+        bot=bundle.bel
+        top=bundle.abv
+        bundle=bundle.delete(seg)
+        if bundle.isEmpty():
             bot.abv=top
             top.bel=bot
             self.join(bot)
-        else:
-            bundle.tree.delete(seg)
         return bundle
     
     #input:bundle A
     #output:swap A with the one above. Join if necessary
     #yet to report intersections
-    def swap(self,A):
+    def swap(self,A,intsec):
         #bot<A<B<top to bot<B<A<top
         B=A.abv
-        print(A.size()*B.size(), "intersections")
+        A.pairs(B,intsec)
+
         bot=A.bel
         top=B.abv
         
@@ -171,13 +191,13 @@ class BundleList:
     
     #input:botHi,topLo where botHi<topLo
     #output:swap botHi until botHi>topLo
-    def swapBotHi(self,botHi,topLo):
+    def swapBotHi(self,botHi,topLo,intsec):
         assert botHi<topLo
         while botHi.abv.abv<topLo:
-            botHi=self.swap(botHi)
+            botHi=self.swap(botHi,intsec)
         #swap botHi but still keeping topLo (else topLo will be lost in the swap)
-        botHi=self.swap(botHi)
-        topLo=botHi.bel #SM: why does this not give topLo.abv==botHi
+        botHi=self.swap(botHi,intsec)
+        topLo=botHi.bel
         assert not topLo.isEmpty()
         assert topLo.abv==botHi
         assert topLo==botHi.bel
@@ -223,26 +243,39 @@ class BundleList:
     #input: flag
     #output: process the flag for sweep line, returns the bundle where the seg is added/removed
     def procFlag(self,flag):
+        intsec=[]
         [botLo,botHi,topLo,topHi]=self.findLoHi(flag)
+        if topLo.isEmpty():
+#            print('topLo empty')
+            assert not topHi.isEmpty()
+            topLo=topHi
         if topHi.isEmpty():
+#            print('topHi empty')
+            assert not topLo.isEmpty()
             topHi=topLo
-#            print("empty split")
+        sameTop=False
+        if topHi==topLo:
+            sameTop=True
         case=self.checkCase(botLo,botHi,topLo,topHi)
-        print('case',case)
+#        print(cases[case])
         if case==0:
             if flag.type==0:
-                return self.procStart0(flag,topLo,topHi)
+                self.procStart0(flag,topLo,topHi)
             else:
-                return self.procEnd(flag,botHi,topLo,topHi)
+                self.procEnd(flag,botHi,topLo,topHi)
         elif case==1:
             if flag.type==0:
-                return self.procStart1(flag,botHi,topLo)
+                self.procStart1(flag,botHi,topLo)
             else:
-                return self.procEnd(flag,botHi,topLo,topHi)
+                self.procEnd(flag,botHi,topLo,topHi)
         else:
-            [botHi,topLo]=self.swapBotHi(botHi,topLo)
-            assert self.checkCase(botLo,botHi,topLo,topHi)==1
+            [botHi,topLo]=self.swapBotHi(botHi,topLo,intsec)
+            if sameTop:
+                topHi=topLo
+            assert self.checkCase(botLo,botHi,topLo,topHi)!=2
             if flag.type==0:
-                return self.procStart1(flag,botHi,topLo)
+                self.procStart1(flag,botHi,topLo)
             else:
-                return self.procEnd(flag,botHi,topLo,topHi)
+                self.procEnd(flag,botHi,topLo,topHi)
+        self.checkColor()
+        return intsec

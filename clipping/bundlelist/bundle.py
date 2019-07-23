@@ -26,6 +26,15 @@ class Bundle:
         self.abv=None
         self.bel=None
         self.color=None
+        return self
+
+    #set fields to other's fields
+    def setTo(self,other):
+        self.tree=other.tree
+        self.abv=other.abv
+        self.bel=other.bel
+        self.color=other.color
+        return self
     
     def __flagTestHelper(self,node,flag):
         cmp=flag.cmpSeg(node.seg)
@@ -48,17 +57,30 @@ class Bundle:
     def split(self,seg):
         return self.tree.splitTree(seg)
     
-    def join(self):
-        assert self.abv!=None
-        B=self.abv
-        top=B.abv
-        self.tree=self.tree.joinTrees(B.tree)
-        
-        self.abv=top
-        top.bel=self
-        B.setNone()
+    #input:other bundle
+    #output:join other bundle into self, delete other bundle
+    def join(self,other):
+        self.tree=self.tree.joinTrees(other.tree)
+        other.setNone()
+        return self
+
+    #input: segment
+    #output: delete segment from bundle
+    def delete(self,seg):
+        self.tree=self.tree.delete(seg)
+        if self.tree.root==None:
+            self.setNone()
         return self
     
+    def pairs(self,other,intsec):
+        A=self.tree.inorder()
+        B=other.tree.inorder()
+        for i in range(len(A)):
+            for j in range(len(B)):
+                intsec.append((A[i],B[j]))
+        return intsec
+
+
     def insert(self,seg):
         assert seg.color==self.color
         return self.tree.insert(seg)
@@ -69,7 +91,7 @@ class Bundle:
     def min(self):
         return self.tree.min
     def isEmpty(self):
-        return self.tree==None and self.color==None and self.abv==None and self.bel==None
+        return self.tree==None
     def size(self):
         return self.tree.size
     

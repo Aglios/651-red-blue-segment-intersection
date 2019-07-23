@@ -1,11 +1,27 @@
 import clipping as cp
-import matplotlib.pyplot as plt
+from testsA import testsA
+from testsB import testsB
+from testsC import testsC
+from testsD import testsD
 
-a=cp.AllSegments()
-a.addRedSq(2)
-a.addBlue(-3,0,0,3)
-a.addBlue(0,1,3,4)
-a.addBlue(0,0,3,0)
-a.plot()
-a.sortFlags()
-a.sweep()
+#testsB[5].sweepDetails()
+
+for i in range(len(testsA)):
+    if not testsA[i].sweep():
+        print('test',i,"does not match expected intersection")
+print('test complete')
+
+for i in range(len(testsB)):
+    if not testsB[i].sweep():
+        print('test',i,"does not match expected intersection")
+print('test complete')
+
+for i in range(len(testsC)):
+    if not testsC[i].sweep():
+        print('test',i,"does not match expected intersection")
+print('test complete')
+
+for i in range(len(testsD)):
+    if not testsD[i].sweep():
+        print('test',i,"does not match expected intersection")
+print('test complete')
