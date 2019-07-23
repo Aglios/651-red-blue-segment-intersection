@@ -101,9 +101,7 @@ class AllSegments:
 #            bl.plot()
 #            plt.show()
         if self.totalInt==self.eint:
-            print('matches expected intersections')
             return True
-        print('does not match expected intersections')
         return False
 
     def sweepDetails(self):

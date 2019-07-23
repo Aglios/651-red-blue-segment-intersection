@@ -1,5 +1,4 @@
 import clipping as cp
-import matplotlib.pyplot as plt
 
 testsA=[]
 
@@ -52,3 +51,33 @@ A9=cp.AllSegments(2)
 A9.addRedSq(4)
 A9.addBlue(-5,-2,-2,-5)
 testsA.append(A9)
+
+A10=cp.AllSegments(2)
+A10.addRedSq(4)
+A10.addBlue(-5,3,5,8)
+testsA.append(A10)
+
+A11=cp.AllSegments(2)
+A11.addRedSq(4)
+A11.addBlue(-5,8,5,3)
+testsA.append(A11)
+
+A12=cp.AllSegments(2)
+A12.addRedSq(4)
+A12.addBlue(-5,2,5,-2)
+testsA.append(A12)
+
+A13=cp.AllSegments(2)
+A13.addRedSq(4)
+A13.addBlue(-5,-2,5,2)
+testsA.append(A13)
+
+A14=cp.AllSegments(2)
+A14.addRedSq(4)
+A14.addBlue(-5,-3,5,-8)
+testsA.append(A14)
+
+A15=cp.AllSegments(2)
+A15.addRedSq(4)
+A15.addBlue(-5,-8,5,-3)
+testsA.append(A15)
