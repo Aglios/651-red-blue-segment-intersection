@@ -1,10 +1,10 @@
-import clipping as cp
+import boolop as bo
 import matplotlib.pyplot as plt
 
 testsB=[]
 
 def flipX(redSq,px,py,qx,qy,intsec):
-    segs=cp.AllSegments(intsec)
+    segs=bo.AllSegments(intsec)
     segs.addRedSq(redSq)
     segs.addBlue(px,py,qx,qy)
     segs.addBlue(-px,py,-qx,qy)
@@ -12,7 +12,7 @@ def flipX(redSq,px,py,qx,qy,intsec):
     return segs
 
 def flipY(redSq,px,py,qx,qy,intsec):
-    segs=cp.AllSegments(intsec)
+    segs=bo.AllSegments(intsec)
     segs.addRedSq(redSq)
     segs.addBlue(px,py,qx,qy)
     segs.addBlue(px,-py,qx,-qy)
@@ -20,7 +20,7 @@ def flipY(redSq,px,py,qx,qy,intsec):
     return segs
 
 def flipXY(redSq,px,py,qx,qy,intsec):
-    segs=cp.AllSegments(intsec)
+    segs=bo.AllSegments(intsec)
     segs.addRedSq(redSq)
     segs.addBlue(px,py,qx,qy)
     segs.addBlue(py,px,qy,qx)
@@ -28,7 +28,7 @@ def flipXY(redSq,px,py,qx,qy,intsec):
     return segs
 
 def flipNegXY(redSq,px,py,qx,qy,intsec):
-    segs=cp.AllSegments(intsec)
+    segs=bo.AllSegments(intsec)
     segs.addRedSq(redSq)
     segs.addBlue(px,py,qx,qy)
     segs.addBlue(-py,-px,-qy,-qx)

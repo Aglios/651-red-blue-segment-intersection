@@ -1,9 +1,9 @@
-import clipping as cp
+import boolop as bo
 import matplotlib.pyplot as plt
 
 testsD=[]
 
-D0=cp.AllSegments(34)
+D0=bo.AllSegments(34)
 D0.addRedSq(6)
 for i in range(8):
     if i==0:
@@ -15,7 +15,7 @@ for i in range(8):
         D0.addBlue(-8,0,-5,-i)
         D0.addBlue(8,0,5,-i)
 
-D1=cp.AllSegments(34)
+D1=bo.AllSegments(34)
 D1.addRedSq(6)
 for i in range(8):
     if i==0:

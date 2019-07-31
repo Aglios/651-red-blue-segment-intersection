@@ -1,10 +1,10 @@
-import clipping as cp
+import boolop as bo
 import matplotlib.pyplot as plt
 
 testsC=[]
 
 def flips(redSq,px,py,qx,qy,intsec):
-    segs=cp.AllSegments(intsec)
+    segs=bo.AllSegments(intsec)
     segs.addRedSq(redSq)
     segs.addBlue(px,py,qx,qy)
     segs.addBlue(-px,py,-qx,qy)

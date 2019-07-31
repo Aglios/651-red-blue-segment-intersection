@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 from .bundle import Bundle
+from ..tree.tree import Tree
+from ..tree.tree import Node
 #BundleList itself holds red bundles
 #case0: botHi>topLo and botHi>topHi
 #case1: botHi>topLo and botHi<topHi
@@ -22,6 +24,8 @@ class BundleList:
         blueMax.bel=redMax
         redMax.abv=blueMax
         
+        self.rbt=Tree(Node(redMin))
+        self.rbt.insert(redMax)
         
         self.lowest=redMin
         self.highest=blueMax
@@ -49,6 +53,8 @@ class BundleList:
         B=Bundle.fromSeg(seg,A,C)
         A.abv=B    
         C.bel=B
+        if seg.color==0: 
+            self.rbt.insert(B)
         assert A.color!=B.color and B.color!=C.color
         return B
     
@@ -62,9 +68,9 @@ class BundleList:
 #        print('splitting',d)
         if d==-1:
             node=node.predecessor()
-            [t1,t2]=bundle.split(node.seg) #dispatch to bundle
+            [t1,t2]=bundle.split(node.val) #dispatch to bundle
         elif d==1:
-            [t1,t2]=bundle.split(node.seg)
+            [t1,t2]=bundle.split(node.val)
         else:
             if bundle.tree.root.left==None and bundle.tree.root.right==None:
                 return [bundle,bundle]
@@ -73,9 +79,9 @@ class BundleList:
                 if node==None:
                     [t1,t2]=[None,bundle.tree]
                 else:
-                    [t1,t2]=bundle.split(node.seg)
+                    [t1,t2]=bundle.split(node.val)
             else:
-                [t1,t2]=bundle.split(node.seg)
+                [t1,t2]=bundle.split(node.val)
         #bundle set to the lower split
         if t1==None:
             return [Bundle(),bundle]
@@ -84,8 +90,11 @@ class BundleList:
         else:
             B=Bundle(t2,bundle,top)
             bundle.tree=t1
+            bundle.max=bundle.tree.root.findMax().val
             bundle.abv=B
             top.bel=B
+            if bundle.color==0:
+                self.rbt.insert(B)
         return [bundle,B]
     
     #input: bundle A
@@ -101,6 +110,8 @@ class BundleList:
 #        print("join")
         B=A.abv
         top=B.abv
+        if A.color==0:
+            self.rbt.delete(B)
         A=A.join(B)
         
         A.abv=top
@@ -113,6 +124,8 @@ class BundleList:
 #        print("delete")
         bot=bundle.bel
         top=bundle.abv
+        if bundle.color==0 and bundle.isSingle():
+            self.rbt.delete(bundle)
         bundle=bundle.delete(seg)
         if bundle.isEmpty():
             bot.abv=top
@@ -143,20 +156,38 @@ class BundleList:
         self.join(bot)
         self.join(A)
         return A
-    
-    #input: flag,start bundle
+
+    #input: flag,start (red) bundle
     #output: bundle(with the same color as start bundle) directly below the flag or the bundle encompassing it
-    def findFlag(self,flag,start):
-        cur=start
+    def findFlag(self,flag,red):
         #invariant: cur is a bundle(same color as start) that's below or contains the flag
-        while cur.abv.abv!=None and flag.cmpSeg(cur.abv.abv.min())>=0:
+        start=red.bel
+        if start==None:
+            start=red.abv
+            assert start!=None
+        if flag.cmpSeg(start.min)>=0:
+            return self.findUp(flag,start)
+        else:
+            return self.findDown(flag,start)
+    
+    def findUp(self,flag,start):
+        cur=start
+        while cur.abv.abv!=None and flag.cmpSeg(cur.abv.abv.min)>=0:
             cur=cur.abv.abv
         return cur
+
+    def findDown(self,flag,start):
+        cur=start
+        while cur.bel.bel!=None and flag.cmpSeg(cur.bel.bel.min)<0:
+            cur=cur.bel.bel
+        return cur
+
+
     
     #input:flag, bundle containing or directly below the flag, position of bundle(higher one 1 or lower one 0)
     #output:the bundles directly above and below the flag
     def flagLoHi(self,flag,bundle,pos):
-        if flag.cmpSeg(bundle.max())>0:
+        if flag.cmpSeg(bundle.max)>0:
             return [bundle,bundle.abv.abv]
         elif pos==0:
             [lo,hi]=self.split(flag,bundle,1)
@@ -167,8 +198,11 @@ class BundleList:
     #input:flag
     #output: [botLo,botHi,topLo,topHi]
     def findLoHi(self,flag):
-        red=self.findFlag(flag,self.lowest)
-        blue=self.findFlag(flag,self.lowest.abv)
+        red=self.rbt.findFlag(flag)
+        blue=self.findFlag(flag,red)
+#        print('critical bundles')
+#        red.prt()
+#        blue.prt()
         if red>blue:
             [botLo,botHi]=self.flagLoHi(flag,blue,0)
             [topLo,topHi]=self.flagLoHi(flag,red,1)
@@ -176,7 +210,7 @@ class BundleList:
             [botLo,botHi]=self.flagLoHi(flag,red,0)
             [topLo,topHi]=self.flagLoHi(flag,blue,1)
         return [botLo,botHi,topLo,topHi]
-    
+
     #input: flag
     #output: returns 0 for case0, 1 for case1 described above
     def checkCase(self,botLo,botHi,topLo,topHi):

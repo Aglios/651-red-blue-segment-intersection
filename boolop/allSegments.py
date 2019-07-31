@@ -42,7 +42,21 @@ class AllSegments:
         self.addRed(-x,-x,x,-x)
         self.addRed(x,x,x,-x)
         self.addRed(x,x,-x,x)
-    
+
+    #input:vertices in ccw
+    #output: adds polygon
+    def addPoly(self,vertices,color):
+        assert len(vertices)>=3
+        for i in range(len(vertices)-1):
+            self.__addSeg(vertices[i],vertices[i+1],color)
+        self.__addSeg(vertices[0],vertices[-1],color)
+
+    def __addSeg(self,p,q,color):
+        if color==0:
+            self.addRed(p[0],p[1],q[0],q[1])
+        else:
+            self.addBlue(p[0],p[1],q[0],q[1])
+
     def partition(self,arr,low,high): 
         i = ( low-1 )         
         pivot = arr[high]      
@@ -109,5 +123,6 @@ class AllSegments:
         self.sortFlags()
         for i in range(len(self.flags)):
             bl.procFlag(self.flags[i])
+            print('bundlelist')
             bl.plot()
             plt.show()
