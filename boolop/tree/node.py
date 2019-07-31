@@ -1,18 +1,14 @@
-from ..basic.segment import Segment
 #warning: functions in Node class do not splay in the tree
 
 class Node:
-    def __init__(self,seg, parent=None, left=None, right=None):
-        self.seg=seg
+    def __init__(self,value, parent=None, left=None, right=None):
+        self.val=value
         self.parent=parent
         self.left=left
         self.right=right
 
-    def fromCoord(px,py,qx,qy,color):
-        return Node(Segment.fromCoord(px,py,qx,qy,color))
-
     def prt(self): # print node alone
-        print('[Node:', self.seg, self.parent, self.left, self.right, ']' )
+        print('[Node:', self.val, self.parent, self.left, self.right, ']' )
         return self
     
     #input: node

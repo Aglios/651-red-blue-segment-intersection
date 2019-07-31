@@ -7,8 +7,14 @@ class Bundle:
         self.tree=tree
         if tree == None:
           self.color = None
+          self.max= None
+          self.min= None
         else:
-          self.color = tree.root.seg.color
+          self.color = tree.root.val.color
+          self.max=tree.root.findMax().val
+          self.min=tree.root.findMin().val
+        
+
         self.bel=bel
         self.abv=abv
         
@@ -37,7 +43,7 @@ class Bundle:
         return self
     
     def __flagTestHelper(self,node,flag):
-        cmp=flag.cmpSeg(node.seg)
+        cmp=flag.cmpSeg(node.val)
         if cmp<0:
             if node.left==None:
                 return [node,-1]
@@ -61,6 +67,7 @@ class Bundle:
     #output:join other bundle into self, delete other bundle
     def join(self,other):
         self.tree=self.tree.joinTrees(other.tree)
+        self.max=other.max
         other.setNone()
         return self
 
@@ -70,6 +77,11 @@ class Bundle:
         self.tree=self.tree.delete(seg)
         if self.tree.root==None:
             self.setNone()
+        else:
+            if seg==self.max:
+                self.max=self.tree.root.findMax().val
+            if seg==self.min:
+               self.min=self.tree.root.findMin().val
         return self
     
     def pairs(self,other,intsec):
@@ -83,17 +95,17 @@ class Bundle:
 
     def insert(self,seg):
         assert seg.color==self.color
+        if self.max==None or seg>self.max:
+            self.max=seg
+        if self.min==None or seg<self.min:
+            self.min=seg
         return self.tree.insert(seg)
     def contains(self,seg):
         return self.tree.contains(seg)
-    def max(self):
-        return self.tree.max
-    def min(self):
-        return self.tree.min
     def isEmpty(self):
         return self.tree==None
-    def size(self):
-        return self.tree.size
+    def isSingle(self): #gives error if used on empty tree
+        return self.tree.root.left==None and self.tree.root.right==None
     
     def plot(self):
         l=self.tree.inorder()
@@ -110,20 +122,26 @@ class Bundle:
         print(' ')
         
     def cmp(self,other):
-        if self.bel!=None and self.bel.color==other.color:
-            if self.bel.max()<other.max():
+        if self.color==other.color:
+            if self.min<other.min:
+                return -1
+            elif self.min>other.min:
+                return 1
+            return 0
+        elif self.bel!=None and self.bel.color==other.color:
+            if self.bel.min<other.min:
                 return -1
             return 1
         elif self.abv!=None and self.abv.color==other.color:
-            if self.abv.max()<=other.max():
+            if self.abv.min<=other.min:
                 return -1
             return 1
         elif other.abv!=None and self.color==other.abv.color:
-            if self.max()<other.abv.max():
+            if self.min<other.abv.min:
                 return -1
             return 1
         elif other.bel!=None and self.color==other.bel.color:
-            if self.max()<=other.bel.max():
+            if self.min<=other.bel.min:
                 return -1
             return 1
         else:
