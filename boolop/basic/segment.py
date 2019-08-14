@@ -1,9 +1,9 @@
 from .point import Point
 import matplotlib.pyplot as plt
 #class for segments 
-#color is 0 for red, 1 for blue
-RBCOLOR = 'rb'
-REDBLUE = ['red','blue']
+#color is 0 for red, 1 for blue, 2 for black
+RBCOLOR = 'rbk'
+REDBLUE = ['red','blue','black']
 
 #invariant:  p<=q lexicographically
 class Segment:

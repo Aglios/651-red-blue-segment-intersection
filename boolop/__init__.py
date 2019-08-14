@@ -12,4 +12,6 @@ from .tree.tree import Tree
 from .bundlelist.bundle import Bundle
 from .bundlelist.bundlelist import BundleList
 
+from .triangulation.convsweep import ConvSweep
+
 from .allSegments import AllSegments
