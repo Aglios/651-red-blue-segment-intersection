@@ -1,5 +1,27 @@
 from .tristrip import TriStrip
 import matplotlib.pyplot as plt
+#invariant: any two bounding segments has a convexhull linking them
+
+'''
+flag=current flag being processed
+abv=segment above flag
+bel=segment below flag
+
+if orientation of abv is negative or flag is terminal:
+	chull=existing convexhull for the particular bounding pair (may be a splitted hull)
+else:
+	chull=new convex hull with pointers to segments bounding it
+
+startSeg=segment in the convex hull to start modifying (know which one to start (max x element or where the split happens)
+
+gift wrap from the startSeg for the new flag
+
+if flag is starting and is within boundary:
+	pointers to newhull from the bounding segments
+
+
+
+'''
 
 class ConvSweep:
     class Node:
