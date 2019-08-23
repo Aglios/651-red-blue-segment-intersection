@@ -6,15 +6,20 @@ RBCOLOR = 'rbk'
 REDBLUE = ['red','blue','black']
 
 #invariant:  p<=q lexicographically
+#ori==1 if everything to the left is inside, ori==-1 if everything to the right is inside
+#
 class Segment:
     def __init__(self,pointA,pointB,color):
         if pointA<pointB:
             self.p=pointA
             self.q=pointB
+            self.ori=1
         else:
             self.p=pointB
             self.q=pointA
+            self.ori=-1
         self.color=color
+        self.chull=None
     
     def fromCoord(xp,xq,yp,yq,color):
         return Segment(Point(xp,xq),Point(yp,yq),color)

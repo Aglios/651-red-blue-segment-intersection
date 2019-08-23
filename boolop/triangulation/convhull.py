@@ -45,10 +45,10 @@ class ConvHull:
             self.nxt=None
             return self
 
-
-    def __init__(self,point:
-        self.chull=ConvHull.Node(point) #keeps points of convex hull in ccw order
-        self.startNode=self.chull #keeps the node with max x-value; changes to split point node when split happens
+    def __init__(self,point):
+        node=ConvHull.Node(point)
+        self.chull=node #keeps points of convex hull in ccw order
+        self.startNode=node #keeps the node with max x-value; changes to split point node when split happens
         self.single=True #True if chull is just a point
 
     #input: new point, node to insert after
@@ -73,7 +73,33 @@ class ConvHull:
     #input: node to split
     #output: [chull ending at node.pt, chull starting at node.pt]
     def split(self,node):
-        return
+        nodePt=node.pt
+        nodePrv=node.prv
+        sent=self.chull
+        end=sent.prv
+
+        #setting self chull to upper portion of split
+        node.prv=end
+        end.nxt=node
+        self.chull=node
+        self.startNode=node
+        if self.chull==self.chull.nxt:
+            self.single=True
+        else:
+            self.single=False
+
+        #creating new ConvHull
+        node2=ConvHull.Node(nodePt,nodePrv,sent)
+        nodePrv.nxt=node2
+        sent.prv=node2
+        newhull=ConvHull(None)
+        newhull.chull=sent
+        newhull.startNode=node2
+        if newhull.chull==newhull.chull.nxt:
+            newhull.single=True
+        else:
+            newhull.single=False
+        return [newhull,self]
     
     #input:flag that has a point that needed to be added, tristrip that stores triangles
     #output: adds flag's point and updates fields
