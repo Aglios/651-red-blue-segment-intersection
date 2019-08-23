@@ -6,7 +6,7 @@ class TriStrip:
         self.triangles=[]
 
     
-    #input: 3 points of a triangle ccw
+    #input: 3 points of a triangle
     #output: adds it to the list of triangles
     def addTri(self,p1,p2,p3):
         self.triangles.append((p1,p2,p3))
