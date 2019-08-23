@@ -15,7 +15,7 @@ chull=existing convexhull pointed to by abv
 startPt=point with max x-coord value
 new=flag point as a node
 add new to chull
-gift wrap cw and ccw from startPt to maintain convexity
+gift wrap cw and ccw from startPt to maintain convexity and updating triangle strips
 
 if flag is a start flag:
     [chull1, chull2]=original chull split at new
@@ -24,6 +24,9 @@ if flag is a start flag:
 return
 '''
 
+
+#ConvHull handles adding new points to the chull along with maintaining convexity and updating triangle strips
+#it does not decide when to split and which segment points to it
 class ConvHull:
     #doubly linked list node used to track points on hull
     class Node:
