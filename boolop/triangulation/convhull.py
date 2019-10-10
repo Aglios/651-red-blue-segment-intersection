@@ -1,6 +1,20 @@
 from .tristrip import TriStrip
 import matplotlib.pyplot as plt
 #invariant: any two bounding segments has a convexhull linking them
+#may need to glue convex hulls back together after split
+
+'''
+look at cases
+
+when at a upwards terminal flag, will need to pinch off the hexagon (remove the following flag seg and dequeue)
+
+when at upwards terminal flag, can detect whether pinch off happens, if no pinch off, need to merge previous convex hulls
+
+if a downard terminal flag sees a non-sentienl line thats downwards, there must be an error
+
+abv and below both point to convex hull
+'''
+
 
 '''
 flag=current flag being processed
@@ -100,6 +114,10 @@ class ConvHull:
         else:
             newhull.single=False
         return [newhull,self]
+
+
+    def merge():
+        
     
     #input:flag that has a point that needed to be added, tristrip that stores triangles
     #output: adds flag's point and updates fields

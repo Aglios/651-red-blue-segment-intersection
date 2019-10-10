@@ -1,0 +1,209 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{fullpage}
+\usepackage{graphicx}
+\def\jss#1{{\footnotesize [{\bf jss:} #1]}}
+
+\title{Boolean Operations Draft}
+\author{Shengtan Mao}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\begin{abstract}
+We detail an implementation of regularized Boolean operations (union, intersection, difference) for two polygonal regions in the plane that directly produces a triangulation of the output region. 
+It is based on an optimal red/blue segment intersection algorithm that requires only double the input precision.  
+We carefully define predicates so that we do not need to define shared endpoints or overlapping segments as degeneracies requiring special handling, but can fold them into the general case.  
+Output can be produced in compact forms.  
+We do not address the geometric rounding of  intersection points (which may require more than double precision) back to input precision, since such rounding must be application-specific.
+\end{abstract}
+\section{Introduction}
+
+%% Set context
+The Boolean operations of intersection, union, and difference for polygonal regions in the plane are fundamental to applications such as Geographic Information Systems (GIS)
+and Computer Aided Design (CAD).  
+In these applications the input may be a region of the plane bounded by straight line segments, 
+each of which labels which side is the region interior.  
+Our algorithm will detect if the labels are inconsistent.
+
+We assume that the input region is regularized -- that it equals the closure of its interior, 
+$A= \textit{cl}(\textit{int}(A))$, and produce regularized output. 
+Regularization removes low dimensional features, allowing us to define boundary cycles: 
+We define a region's \textit{boundary} to be the nested set of cycles of segments that share a vertex, forming an angle that is locally entirely inside one region. 
+
+Note that this definition is asymmetric in its handling of the interior and exterior of a region:  Two triangles that touch at a single vertex are considered as two separate cycles if the interior is inside, and as a single cycle if the interior is outside.  
+
+Input precision
+
+Boolean operations
+
+Sweep algorithms in the plane convert two-dimensional problems into dynamic one-dimensional problems,
+for example by sweeping a line or pseudoline across segments in the
+plane and observing events where the order of segments crossing the sweep changes.
+Thus, it is obvious that the events will be segment endpoints and intersections. Like many obvious things in mathematics it takes careful definition to make this precise -- especially when many segments can end at a common endpoint, but we want to process them one at a time to keep the handling simple, and when we want to process bundles of segments the cross as a grid for efficiency.  
+Therefore, we begin with several definitions and invariants before we identify the events and say how to handle them. 
+
+\section{Definitions}
+Points in the plane are compared by lexicographic order, breaking ties in $x$ coordinates by comparing $y$ coordinates.
+
+\subsection{Segments and flags}
+A \textit{segment} consists of two endpoints $p<q$, a color (red or blue), and
+a label whether the region it bounds is to the right or left. \jss{need a figure}
+We assume that segment endpoints are represented exactly in {\it input precision}.
+If the relative interior of any segment $pr$ contains a segment endpoint $q$, 
+then we break $pr$ into $pq$ and $qr$. We cannot break at all intersection points, 
+because those may require greater than input precision. 
+
+Because segments can share endpoints, it is useful to introduce \textit{flags}: 
+segment $pq$ has a \textit{start} flag at $p$ and \textit{terminal} flag at $q$, 
+which inherit the color, slope, and label from $pq$. 
+\jss{probably need notation for the flags of $pq$: could even use $p_q$ for start and $_pq$ for terminal.}
+To compare flags, we compare the points, breaking ties so terminal flags precede starts, 
+lower segments precede higher segments (that is, slope is decreasing for terminal flags and increasing for start flags), and red precedes blue. \jss{need a figure}
+
+\subsection{Sweep}\label{sec sweep}
+In the double-precision red/blue segment sweep algorithm~\cite{MS}, a flag will \textit{witness} the intersection of segments $s$ and $t$ if it is the smallest flag right of the wedge formed by the intersection of $s$ and $t$. \jss{need figure}. 
+In \cite{MS} this algorithm is described as 
+treating the $n$ input line segments as monotone curves and pushing all intersections to the right as far as possible -- to their witness flags. 
+A line sweeps across the plane, maintaining the order of these curves as alternating bundles of red and blue segments for which all witnessed intersections are to the left and unwitnessed intersections are to the right of the sweepline. 
+An event occurs at each flag, which may witness intersections between several bundles, as well as terminating or starting a segment.  
+The paper~\cite{MS} shows that bundles can be processed by split, swap, and merge in $O(n\lg n)$ total time, producing a concise description of all $k$ intersections, even if $k=\Theta(n^2)$.
+
+We refine this in Section~\ref{sec:sweep} to treat bundle swaps as separate events
+
+This can be refined further to treat segment intersections as separate events. 
+
+K., Iacono, and Langermann~\cite{}  point out that the sweep can be understood as sweeping a pseudoline over the plane.  \jss{let's come back to this to show how, because I think it may make it easier to describe the invariant for the triangulation.}
+
+\subsection{Bundlelist}
+On the sweepline, there are sections where only blue segments intersect it and sections where only red segments intersect it. 
+The bundlelist is formed by grouping these segments among these regions.
+Each bundle contains only one color of segments, and the segments are consecutive increasing with respect to aboveness.
+%%needs picture
+The bundlelist is then a linked list of bundles that supports swap, split, and merge of bundles; it also supports bundle search by using flags.
+Swapping bundles can be easily done in a linked list.
+The segments of a bundle will be stored in a splay tree for amortized split time of $O(log(n))$ and amortized merge time of $O(log(m*n))$ where $m$, $n$ are total number of segments in the bundle.
+We also keep the red bundles in a splay tree ordered by aboveness (no intersection within a color, so ordering is defined) for binary search on the bundlelist with flags.
+
+\subsection{Interior and Exterior Pairs}
+%pic
+
+\subsection{Pinch Pairs}
+Two segments are outlining pairs if they sharing an endpoint and are either interior or exterior pairs.
+%pic
+
+\subsection{Move Pairs}
+Two segments are move pairs if one's terminal flag shares the same point as the other's start flag, have the same orientation, and are either the first terminal flag start flag at that point or the last terminal and start flag at that point.
+%pic
+
+
+\subsection{Boundary and Triangulation}
+
+
+The output of our algorithm can be the list of boundary cycles with their nesting structure, or a triangulation of the interior of the output region, optionally with its nesting structure. For this implementation we focus on the triangulation. \jss{figure needed}
+Errors detected and flagged include inconsistent labeling of interiors or crossing segments of the same color. 
+
+We create a triangulation using the same sweep, with the invariant  
+
+\subsection{Boolean Operations}
+
+Here we just say that they are local, even for the regularized. 
+
+\section{Segment Intersection Algorithm} \label{sec inter}
+The input is two groups of segments such that no segments intersect each other within a group and no segment has an endpoint inside another segment.
+This algorithm outputs all the intersections in the order they are witnessed by the flags and in order along the segments for each batch witnessed.
+As the sweepline sweeps over the segments, we check that the bundlelist bundles are alternating in color and are ordered with respect to aboveness.
+
+Consider the segments directly above and below the current flag. 
+If those two ranges given by the two segments in each group do not overlap, it means the flag witnessed intersection(s) and the bundlelist is no longer ordered by aboveness.
+The aboveness order and alternating bundle color invariants can be restored by a sequence of split, swap, and/or merge operations on the bundles.
+If bundles $B$, $R$ are swapped, every segment from $B$ intersects every segment from $R$.
+If $B$ is originally higher, we record the intersections of this swap starting from the lowest segment of $B$ intersecting $R$ from highest to lowest segment in $R$; we go through all the segments in $B$ from low to high.
+
+\section{Pseudoline Sweep}
+The triangulation algorithm uses a pseudoline sweep instead of the sweep defined in (\ref{sec sweep}).
+The pseudoline moves through one pinch pair or one move pair at each change.
+Intersections, grouped by swaps, witnessed by a flag is available for the triangulation algorithm.
+For each swap, the we process intersections in the order recorded in (\ref{sec inter}).
+Each intersection can be seen as two pinch pairs or two move pairs, and the pseudoline moves through one pair at a time.
+We process each swap in the order it appeared, and lastly the flag itself.
+We processes flags individually but the pseudoline moves through pinch pairs or move pairs at each change.
+
+
+\section{Algorithms}%% definitions
+
+\subsection{Triangulation}
+\jss{can't really do this before the segment sweep because we aren't sweeping with a straight line.  Or we can, but then we need to identify what it depends on and show that the boolean operation from the segment sweep gives us that.}
+Let's consider first only one group of polygons with well-defined interior.
+The goal is to triangulate the polygons in a fashion that is consistent with the sweep order.
+As the sweepline sweeps across, it will maintain a boundary. 
+The boundary will be defined by a list of flags ordered counter clockwise on points, breaking ties by sweep order.
+\jss{not a good definition  (avoid future tense; sweep order not defined}
+Note that points may be duplicates since two different flags may share the same point.
+A start flag is on the boundary if and only if the segment of that flag intersects the sweepline.
+If a pair of neighboring segments intersecting the sweepline outlines the interior of a polygon, the portion of the boundary between the pair of start flags must be constructed from terminal flags.
+We call these pairs interior pairs.
+If two neighboring segments intersecting the sweepline outlines an exterior region, the portion of the boundary between the pair of start flags will be empty.
+We call these pairs exterior pairs.
+As we process the flags in sweep order, the invariant is that any neighboring pair of segments intersecting the sweepline is an interior pair or an exterior pair.
+This will ensure the interior and exterior of the group of polygons remain consistent.
+
+Since the flags are processed one by one, it is inevitable that the invariant will be broken at certain flags; it is therefore necessary to always check that the the invariant will be restored by a future flag.
+In most cases invariant broken by the current flag will be restored by the next flag in sweep order.
+%add picture
+We call these pinch cases.
+However there are two exceptions: first terminal flag at a point and the last terminal flag at a point.
+The invariant broken by the first terminal flag may have to be resolved by the first start flag sharing the same point, and the invariant broken by the last terminal flag may have to be resolved by the last start flag sharing the same point.
+%add pic 1
+%add pic 2
+We call these move cases.
+We have to keep track of the invariant breaking flags at each point; if we see that the invariant cannot be restored by future flags, we can throw an error since the group of polygons given has inconsistent interior and exterior.
+
+\subsubsection{Advancing the Boundary}
+If $s_0$ and $s_1$ are start flags on the boundary describing interior pairs; let the portion of the boundary between and including them be defined by $r_0$, $r_1$, ... , $r_n$.
+Let $f$ be a flag between $s_0$ and $s_1$.
+If the points of $r_i$, $r_{i+1}$, $f$ describe a clockwise oriented triangle, the triangle will not conflict with the left of the boundary and can be added to the triangulation; this portion of the boundary will then be updated so the region to the left is triangulated and the region to the right is not.
+%picture
+By induction, the portion of the boundary between interior flags will have the property that its left region is triangulated and its right region is not.
+If $s_0$ and $s_1$ are start flags on the boundary describing exterior pairs and $f$ is a flag between them,
+we advance the boundary simply by adding $f$ as a new node between the nodes of $s_0$ and $s_1$.
+We call this process advancing the boundary between by $f$.
+
+\subsubsection{Processing Flags}
+Let $f_0$ and $f_1$ be the flags processed back to back in a pinch case.
+$f_0$ will advance the boundary, and $f_0$ will be kept track of since it breaks the invariant.
+When processing $f_1$, it will see that it restores the invariant broken by $f_0$.
+If $f_0$ and $f_1$ are terminal flags, we remove both from the boundary.
+If they are start flags, we add $f_1$ to the boundary after adding $f_0$.
+
+Let $t$ be the terminal flag and $s$ be the start flag in a move case.
+$t$ will advance the boundary, and it will be replaced by $s$ when $s$ is processed and sees that it restores a move case invariant.
+
+
+\subsection{Boolean Operations}
+In essence, Boolean operations are accomplished by alternating the progression of the triangulation and segment intersection algorithms.
+The triangulation algorithm needs to be able to process intersections as well as flags in order to be compatible with the intersection algorithm.
+We introduce a new data structure: intersection; it keeps the two segments forming the intersection and the coordinate of their intersection.
+The calculation for advancing the boundary will be done on the coordinate of the intersection.
+But unlike flags, intersections should be thought of as being processed in bundles instead of individually.
+
+The segment intersection algorithm steps first to the next flag, followed by the triangulation algorithm.
+The invariant is that the sweeplines of the two algorithms coincide on every flag.
+Note that intersections are witnessed whenever two bundles in the intersection sweepline are swapped.
+We advance the triangulation sweepline after every bundle swap.
+Let $B_0$ be the bundle originally on the bottom of the swap, and $B_1$ be the bundle originally on the top.
+If $B_0$ and $B_1$ both contain a large number of segment, observe that their intersection will form a checkerboard-like pattern with respect to the common Boolean operations. 
+%pic
+Let $t_0$, $b_0$ be the top and bottom most segment in $B_0$, and $t_1$, $b_1$ be the top and bottom most segment in $B_1$.
+Note that we only need to process the intersections between ${t_0,b_0} cap B_1$ and ${t_1,b_1} cap B_0$.
+All other intersections contribute only to the checkerboard-pattern and they can be systematically triangulated.
+Consider $t_0 cap B_1$.
+The intersections will be given in order of aboveness along $t_0$.
+Consecutive pairs of segments intersection $t_0$, which is exactly $B_1$, should alternate between interior and exterior pairs.
+We will go through $B_1$ to check this holds and advance the boundary accordingly.
+The analogous process will be applied to the other combinations of segment and bundle.
+Lastly, we check on the intersections ${t_0,b_0} cap {t_1,b_1}$ to see if the interior is consistent on the polygons formed at those points.
+
+
+\end{document}
