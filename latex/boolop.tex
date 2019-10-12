@@ -4,8 +4,8 @@
 \usepackage{graphicx}
 \def\jss#1{{\footnotesize [{\bf jss:} #1]}}
 
-\title{Boolean Operations Draft}
-\author{Shengtan Mao}
+\title{Boolean Operations}
+\author{Shengtan Mao, Jack Snoeyink}
 \date{\today}
 
 \begin{document}
@@ -16,7 +16,7 @@ We detail an implementation of regularized Boolean operations (union, intersecti
 It is based on an optimal red/blue segment intersection algorithm that requires only double the input precision.  
 We carefully define predicates so that we do not need to define shared endpoints or overlapping segments as degeneracies requiring special handling, but can fold them into the general case.  
 Output can be produced in compact forms.  
-We do not address the geometric rounding of  intersection points (which may require more than double precision) back to input precision, since such rounding must be application-specific.
+We do not address the geometric rounding of intersection points (which may require more than double precision) back to input precision, since such rounding must be application-specific.
 \end{abstract}
 \section{Introduction}
 
@@ -30,7 +30,7 @@ Our algorithm will detect if the labels are inconsistent.
 We assume that the input region is regularized -- that it equals the closure of its interior, 
 $A= \textit{cl}(\textit{int}(A))$, and produce regularized output. 
 Regularization removes low dimensional features, allowing us to define boundary cycles: 
-We define a region's \textit{boundary} to be the nested set of cycles of segments that share a vertex, forming an angle that is locally entirely inside one region. 
+We define a region's \textit{boundary} to be the nested set of cycles of segments that share a vertex, forming an angle that is locally entirely inside one region.
 
 Note that this definition is asymmetric in its handling of the interior and exterior of a region:  Two triangles that touch at a single vertex are considered as two separate cycles if the interior is inside, and as a single cycle if the interior is outside.  
 
@@ -49,7 +49,8 @@ Points in the plane are compared by lexicographic order, breaking ties in $x$ co
 
 \subsection{Segments, Flags, Intersections}
 A \textit{segment} consists of two endpoints $p<q$, a color (red or blue), and
-a label whether the region it bounds is to the right or left. \jss{need a figure}
+a label whether the region it bounds is above or below. 
+%pic
 We assume that segment endpoints are represented exactly in {\it input precision}.
 If the relative interior of any segment $pr$ contains a segment endpoint $q$, 
 then we break $pr$ into $pq$ and $qr$. We cannot break at all intersection points, 
@@ -59,21 +60,25 @@ Because segments can share endpoints, it is useful to introduce \textit{flags}:
 segment $pq$ has a \textit{start} flag at $p$ and \textit{terminal} flag at $q$, 
 which inherit the color, slope, and label from $pq$. 
 \jss{probably need notation for the flags of $pq$: could even use $p_q$ for start and $_pq$ for terminal.}
+%identifying flags in words may be cleaer since the flag point could be an intersection
 To compare flags, we compare the points, breaking ties so terminal flags precede starts, 
-lower segments precede higher segments (that is, slope is decreasing for terminal flags and increasing for start flags), and red precedes blue. \jss{need a figure}
+lower segments precede higher segments (that is, slope is decreasing for terminal flags and increasing for start flags), and red precedes blue.
+%pic
 
-Intersections can be thought of as flags although we could not order them as above.
-The endpoint is thought of as the intersection and the segment will be one of the two segments of the intersection.
+An intersection stores the two segments forming it.
+A intersection flag features the the intersection as the flag's point and one of the segments forming the intersection as the flag's segment.
+Note intersection flags cannot be ordered like normal flags, but both types can be referred to as falgs.
 
 \subsection{Sweep}\label{sec sweep}
-In the double-precision red/blue segment sweep algorithm~\cite{MS}, a flag will \textit{witness} the intersection of segments $s$ and $t$ if it is the smallest flag right of the wedge formed by the intersection of $s$ and $t$. \jss{need figure}. 
+In the double-precision red/blue segment sweep algorithm~\cite{MS}, a flag will \textit{witness} the intersection of segments $s$ and $t$ if it is the smallest flag right of the wedge formed by the intersection of $s$ and $t$.
+%pic
 In \cite{MS} this algorithm is described as 
 treating the $n$ input line segments as monotone curves and pushing all intersections to the right as far as possible -- to their witness flags. 
 A line sweeps across the plane, maintaining the order of these curves as alternating bundles of red and blue segments for which all witnessed intersections are to the left and unwitnessed intersections are to the right of the sweepline. 
 An event occurs at each flag, which may witness intersections between several bundles, as well as terminating or starting a segment.  
 The paper~\cite{MS} shows that bundles can be processed by split, swap, and merge in $O(n\lg n)$ total time, producing a concise description of all $k$ intersections, even if $k=\Theta(n^2)$.
 
-We refine this in Section~\ref{sec:sweep} to treat bundle swaps as separate events
+We refine this in (\ref{sec sweep}) to treat bundle swaps as separate events
 
 This can be refined further to treat segment intersections as separate events. 
 
@@ -83,7 +88,7 @@ K., Iacono, and Langermann~\cite{}  point out that the sweep can be understood a
 On the sweepline, there are sections where only blue segments intersect it and sections where only red segments intersect it. 
 The bundlelist is formed by grouping these segments among these regions.
 Each bundle contains only one color of segments, and the segments are consecutive increasing with respect to aboveness.
-%%needs picture
+%pic
 The bundlelist is then a linked list of bundles that supports swap, split, and merge of bundles; it also supports bundle search by using flags.
 Swapping bundles can be easily done in a linked list.
 The segments of a bundle will be stored in a splay tree for amortized split time of $O(log(n))$ and amortized merge time of $O(log(m*n))$ where $m$, $n$ are total number of segments in the bundle.
@@ -91,8 +96,8 @@ We also keep the red bundles in a splay tree ordered by aboveness (no intersecti
 
 \subsection{Interior and Exterior Pairs}
 Given two flags whose segments are consecutive with respect to aboveness on the sweepline.
-They are an interior pair if the top segment is negatively oriented and the bottom is positively oriented.
-They are an exterior pair if the top segment is positively oriented and the bottom is negatively oriented.
+They are an interior pair if the top segment bounds below and the bottom bounds above.
+They are an exterior pair if the top segment bounds above and the bottom bounds below.
 Note that we allow two segments of different colors to from a pair.
 %pic
 
@@ -101,15 +106,16 @@ Two flags are a pinch pair if they sharing the same point and their segments are
 %pic
 
 \subsection{Move Pairs}
-A terminal and a start flag are a move pair if they share the same point, and their segments have the same orientation.
-The also must be either the first terminal flag and start flag at that point or the last terminal and start flag at that point.
+A terminal and a start flag are a move pair if they share the same point, and their segments bound the same direction.
 %pic
 
-
 \subsection{Triangulation}
-The output of our algorithm can be the list of boundary cycles with their nesting structure, or a triangulation of the interior of the output region, optionally with its nesting structure. For this implementation we focus on the triangulation. \jss{figure needed}
-Errors detected and flagged include inconsistent labeling of interiors or crossing segments of the same color. 
+The output of our algorithm can be the list of boundary cycles with their nesting structure, or a triangulation of the interior of the output region, optionally with its nesting structure. For this implementation we focus on the triangulation.
+%pic
+%with the update algorithm it can only detect inconsistent labeling in the resulting polygon
+%segment crossing of same color have to be checked before hand and is no part of the design
 
+%may need a different word from boundary since it may cause confusion with polygon boundary
 \subsection{Boundary} \label{sec boundary}
 The boundary is a linked list of flags in counter-clockwise order starting from the sentinel flag on the bottom left of the plane.
 The points of the flags connected by the links of the boundary indicate a region.
@@ -127,16 +133,16 @@ If $s_0$ and $s_1$ are start flags on the boundary describing exterior pairs and
 we advance the boundary by adding $f$ as a new node between the nodes of $s_0$ and $s_1$.
 We call this process advancing the boundary between by flag $f$.
 
-
+%is this necessary since it is discussed in the introduction
 \subsection{Boolean Operations}
 The result of the set operations union, intersection, or difference on the two polygon groups.
 %not sure what local means
 The operations are local, even for the regularized. 
 
 \subsection{Visible Segments}
-If operation is union, a negatively oriented segment is visible if the segment directly above it on the sweepline is oriented positively; a positively oriented segment is visible if the segment directly below it on the sweepline is oriented negatively.
-If the operation is intersection, a segment is visible if the segment directly above is of the opposite color and negatively oriented and the segment directly below is of the opposite color and positively oriented.
-%%need to explain subtract blue
+If operation is union, a segment that bounds below is visible if the segment directly above it on the sweepline bounds above; a segment that bounds above is visible if the segment directly below it on the sweepline bounds below;
+If the operation is intersection, a segment is visible if the segment directly above is of the opposite color and bounds below and the segment directly below is of the opposite color and bounds above.
+%need to explain subtract blue
 Visible flags are flags containing visible segments, and visible intersections are intersections containing visible segments.
 
 \section{Segment Intersection Algorithm} \label{sec inter}
@@ -150,7 +156,7 @@ The aboveness order and alternating bundle color invariants can be restored by a
 If bundles $B$, $R$ are swapped, every segment from $B$ intersects every segment from $R$.
 If $B$ is originally higher, we record the intersections of this swap starting from the lowest segment of $B$ intersecting $R$ from highest to lowest segment in $R$; we go through all the segments in $B$ from low to high.
 
-\section{Pseudoline Sweep}
+\section{Pseudoline Sweep} \label{sec sweep}
 The triangulation algorithm uses a pseudoline sweep instead of the sweep defined in (\ref{sec sweep}).
 The pseudoline moves through one pinch pair or one move pair at each change.
 Intersections, grouped by swaps, witnessed by a flag is available for the triangulation algorithm.
