@@ -78,11 +78,12 @@ A line sweeps across the plane, maintaining the order of these curves as alterna
 An event occurs at each flag, which may witness intersections between several bundles, as well as terminating or starting a segment.  
 The paper~\cite{MS} shows that bundles can be processed by split, swap, and merge in $O(n\lg n)$ total time, producing a concise description of all $k$ intersections, even if $k=\Theta(n^2)$.
 
-We refine this in (\ref{sec sweep}) to treat bundle swaps as separate events
+We refine this in (\ref{sec pseudo}) to treat bundle swaps as separate events
 
 This can be refined further to treat segment intersections as separate events. 
 
 K., Iacono, and Langermann~\cite{}  point out that the sweep can be understood as sweeping a pseudoline over the plane.  \jss{let's come back to this to show how, because I think it may make it easier to describe the invariant for the triangulation.}
+%pseudoline section
 
 \subsection{Bundlelist}
 On the sweepline, there are sections where only blue segments intersect it and sections where only red segments intersect it. 
@@ -94,44 +95,24 @@ Swapping bundles can be easily done in a linked list.
 The segments of a bundle will be stored in a splay tree for amortized split time of $O(log(n))$ and amortized merge time of $O(log(m*n))$ where $m$, $n$ are total number of segments in the bundle.
 We also keep the red bundles in a splay tree ordered by aboveness (no intersection within a color, so ordering is defined) for binary search on the bundlelist with flags.
 
-\subsection{Interior and Exterior Pairs}
+\subsection{Event Pairs}
 Given two flags whose segments are consecutive with respect to aboveness on the sweepline.
-They are an interior pair if the top segment bounds below and the bottom bounds above.
-They are an exterior pair if the top segment bounds above and the bottom bounds below.
+They are an \textit{interior pair} if the top segment bounds below and the bottom bounds above.
+They are an \textit{exterior pair} if the top segment bounds above and the bottom bounds below.
 Note that we allow two segments of different colors to from a pair.
 %pic
 
-\subsection{Pinch Pairs}
-Two flags are a pinch pair if they sharing the same point and their segments are either interior or exterior pairs.
+Two flags are a \textit{--- pair} if they sharing the same point and their segments are either interior or exterior pairs.
+%pic
+A terminal and a start flag are a \textit{move pair} if they share the same point, and their segments bound the same direction.
+An event pair is a --- pair or a move pair.
 %pic
 
-\subsection{Move Pairs}
-A terminal and a start flag are a move pair if they share the same point, and their segments bound the same direction.
-%pic
-
-\subsection{Triangulation}
-The output of our algorithm can be the list of boundary cycles with their nesting structure, or a triangulation of the interior of the output region, optionally with its nesting structure. For this implementation we focus on the triangulation.
+\subsection{Boundary Cycles}
+Our algorithm outputs the list of boundary cycles with their nesting structure.
 %pic
 %with the update algorithm it can only detect inconsistent labeling in the resulting polygon
 %segment crossing of same color have to be checked before hand and is no part of the design
-
-%may need a different word from boundary since it may cause confusion with polygon boundary
-\subsection{Boundary} \label{sec boundary}
-The boundary is a linked list of flags in counter-clockwise order starting from the sentinel flag on the bottom left of the plane.
-The points of the flags connected by the links of the boundary indicate a region.
-Any portion of the boundary between two start flags of an interior pair satisfy the condition that the left region is triangulated and the the right region is not.
-Adding flags whose points already exist in the boundary and removing flags directly adds or removes the flags from the linked list.
-For flags with points not already in the boundary we need to advance the boundary.
-
-%doesn't this requires calculating the actual point of intersection?
-\subsubsection{Advance the Boundary}
-If $s_0$ and $s_1$ are start flags on the boundary describing interior pairs; let the portion of the boundary between and including them be defined by $r_0$, $r_1$, ... , $r_n$.
-Let $f$ be a flag between $s_0$ and $s_1$.
-If the points of $r_i$, $r_{i+1}$, $f$ describe a clockwise oriented triangle, the triangle is added to the triangulation; this portion will be updated to satisfy the condition stated in (\ref{sec boundary}).
-%picture
-If $s_0$ and $s_1$ are start flags on the boundary describing exterior pairs and $f$ is a flag between them,
-we advance the boundary by adding $f$ as a new node between the nodes of $s_0$ and $s_1$.
-We call this process advancing the boundary between by flag $f$.
 
 %is this necessary since it is discussed in the introduction
 \subsection{Boolean Operations}
@@ -156,7 +137,7 @@ The aboveness order and alternating bundle color invariants can be restored by a
 If bundles $B$, $R$ are swapped, every segment from $B$ intersects every segment from $R$.
 If $B$ is originally higher, we record the intersections of this swap starting from the lowest segment of $B$ intersecting $R$ from highest to lowest segment in $R$; we go through all the segments in $B$ from low to high.
 
-\section{Pseudoline Sweep} \label{sec sweep}
+\section{Pseudoline Sweep} \label{sec pseudo}
 The triangulation algorithm uses a pseudoline sweep instead of the sweep defined in (\ref{sec sweep}).
 The pseudoline moves through one pinch pair or one move pair at each change.
 Intersections, grouped by swaps, witnessed by a flag is available for the triangulation algorithm.
@@ -165,6 +146,15 @@ Each intersection can be seen as two pinch pairs or two move pairs, and the pseu
 We process each swap in the order it appeared, and lastly the flag itself.
 We processes flags individually but the pseudoline moves through one pinch pair or move pair at each change.
 Note that a pinch pair is consecutive in flag order but a move pair need not be.
+
+Two segments are \textit{comparable} if there is a state of the pseudoline that intersects both segments.
+Note that the aboveness comparison of the segments depend on the state of the pseudoline.
+
+\section{Constructing Boundary Cycles} \label{sec bcycle}
+Each \textit{boundary cycle} $b$ is an list of points with a pointer to the boundary cycle $c$ that contains $b$.
+The left side of the oriented segments formed by the $b$'s list is the insde of a polygon.
+$b$ is contained in $c$ if whenever the pseudoline intersects $b$, the top segment of $b$ 
+
 
 \section{Boolean Ooperation Algorithm}
 We execute the segment intersection algorithm.
