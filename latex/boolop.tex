@@ -97,16 +97,19 @@ The segments of a bundle will be stored in a splay tree for amortized split time
 We also keep the red bundles in a splay tree ordered by aboveness (no intersection within a color, so ordering is defined) for binary search on the bundlelist with flags.
 
 \subsection{Event Pairs}
-Given two flags whose segments are consecutive with respect to aboveness on the sweepline.
+Two segments are \textit{comparable} if there exists a state of the sweepline(pseudoline) that intersects both segments.
+Note that the order of aboveness of two comparable segments depend on the particular state of the sweepline.
+Given two flags whose segments are comparable and consecutive with respect to aboveness on the sweepline.
 They are an \textit{interior pair} if the top segment bounds below and the bottom bounds above.
 They are an \textit{exterior pair} if the top segment bounds above and the bottom bounds below.
 Note that we allow two segments of different colors to from a pair.
 %pic
 
-Two flags are a \textit{--- pair} if they sharing the same point and their segments are either interior or exterior pairs.
+Two flags are a \textit{start pair} if they are start flags that share the same point, and the flags' segments are both interior or both exterior pairs.
 %pic
+Two flags are a \textit{terminal pair} if they are terminal flags that share the same point, and the flags' segments are both interior or both exterior pairs.
 A terminal and a start flag are a \textit{move pair} if they share the same point, and their segments bound the same direction.
-An event pair is a --- pair or a move pair.
+An event pair is any type of pairs above.
 %pic
 
 \subsection{Boundary Cycles}
@@ -140,29 +143,32 @@ If $B$ is originally higher, we record the intersections of this swap starting f
 
 \section{Pseudoline Sweep} \label{sec pseudo}
 The triangulation algorithm uses a pseudoline sweep instead of the sweep defined in (\ref{sec sweep}).
-The pseudoline moves through one pinch pair or one move pair at each change.
+The pseudoline moves through one event pair at each change.
 Intersections, grouped by swaps, witnessed by a flag is available for the triangulation algorithm.
 For each swap, the we process intersections in the order recorded in (\ref{sec inter}).
-Each intersection can be seen as two pinch pairs or two move pairs, and the pseudoline moves through one pair at a time.
+Each intersection can be seen as two event pairs, and the pseudoline moves through one pair at a time.
 We process each swap in the order it appeared, and lastly the flag itself.
-We processes flags individually but the pseudoline moves through one pinch pair or move pair at each change.
-Note that a pinch pair is consecutive in flag order but a move pair need not be.
-
-Two segments are \textit{comparable} if there is a state of the pseudoline that intersects both segments.
-Note that the aboveness comparison of the segments depend on the state of the pseudoline.
+We processes flags individually but the pseudoline moves through one event pair at each change.
+Note that a move pair need not be consecutive in flag order.
 
 \section{Constructing Boundary Cycles} \label{sec bcycle}
 Each \textit{boundary cycle} $b$ is an list of points with a pointer to the boundary cycle $c$ that contains $b$.
 The left side of the oriented segments formed by the $b$'s list is the insde of a polygon.
-$b$ is contained in $c$ if whenever the pseudoline intersects $b$, the top segment of $b$ 
+$b$ is contained in $c$ if whenever the pseudoline intersects $b$, the top segment of $b$ is below the top segment of $c$, and the bottom segment of $b$ is above the bottom segment of $c$; and there exist a state of the pseudoline the top segment of $b$ is \textit{directly} below the top segment of $c$, and the bottom segment of $b$ is \textit{directly} above the bottom segment of $c$.
+
+We keep track of all boundary cycles intersecting the pseudoline.
+When the pseudoline moves across a start pair, a new boundary cycle is added with a pointer to the boundary cycle containing the segment directly above the start pair.
+When the pseudoline moves across a terminal pair, a boundary cycle is finished or two boundary cycles are realized to be one; the pointer will be modified accordingly.
+When the pseudoline moves acorss a move pair, an existing boundary cycle gains additional points and its pointer is modified if necessary.
+Two boundary cycles may need to be merged, and its pointer may need to point to the containing boundary cycle of the current containing boundary cycle.
+Union-find data structure can efficiently store boundary cycles.
+Each segment also needs a pointer to the boundary cycle it contributed to.
 
 
 \section{Boolean Ooperation Algorithm}
 We execute the segment intersection algorithm.
-At every flag and every bundle swap we progress the pseudoline sweep and update the triangulation.
+Between every flag and every bundle swap we progress the pseudoline sweep and update the boundary cycles.
 Only the visible intersections of bundle swaps and visible flags will form the objects being swept over by the pseudoline.
-The pseudoline will modify the boundary and produce the triangulation.
-For a pinch pair, the pseudoline will advance the boundary by adding the first flag then add the second flag if it is an interior pair or remove both flags from the boundary if it is an exterior pair.
-For a move pair, the pseudoline will advance the boundary by adding the first flag then replace the first flag by the second flag.
+The boundary cycles will be updated with the visible flags, and finished boundary cycles will be recorded.
 
 \end{document}
