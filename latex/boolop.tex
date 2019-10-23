@@ -23,15 +23,14 @@ We do not address the geometric rounding of intersection points (which may requi
 %% Set context
 The Boolean operations of intersection, union, and difference for polygonal regions in the plane are fundamental to applications such as Geographic Information Systems (GIS)
 and Computer Aided Design (CAD).  
-In these applications the input may be a region of the plane bounded by straight line segments, 
-each of which labels which side is the region interior.  
-Our algorithm will detect if the labels are inconsistent.
+In these applications the input is one or more collections of straight line segments that bound a region of the plane.
+Each segment is labeled with which side is the region interior; our algorithm will detect if the labels are inconsistent.
+The desired output may be the union, intersection, difference or symmetric difference of regions. 
 
 We assume that the input region is regularized -- that it equals the closure of its interior, 
-$A= \textit{cl}(\textit{int}(A))$, and produce regularized output. 
+$A= \textit{cl}(\textit{int}(A))$. , and produce regularized output. 
 Regularization removes low dimensional features, allowing us to define boundary cycles: 
 We define a region's \textit{boundary} to be the nested set of cycles of segments that share a vertex, forming an angle that is locally entirely inside one region.
-
 Note that this definition is asymmetric in its handling of the interior and exterior of a region:  Two triangles that touch at a single vertex are considered as two separate cycles if the interior is inside, and as a single cycle if the interior is outside.  
 
 Input precision
@@ -39,9 +38,9 @@ Input precision
 Boolean operations
 
 Sweep algorithms in the plane convert two-dimensional problems into dynamic one-dimensional problems,
-for example by sweeping a line or pseudoline across segments in the
+often by sweeping a line or pseudoline across segments in the
 plane and observing events where the order of segments crossing the sweep changes.
-Thus, it is obvious that the events will be segment endpoints and intersections. Like many obvious things in mathematics it takes careful definition to make this precise -- especially when many segments can end at a common endpoint, but we want to process them one at a time to keep the handling simple, and when we want to process bundles of segments the cross as a grid for efficiency.  
+In such a sweep,  the events will obviously be segment endpoints and intersections. Like many obvious things in mathematics it takes careful definition to make this precise -- especially when many segments can end at a common endpoint, but we want to process them one at a time to keep the handling simple, and when we want to process bundles of segments the cross as a grid for efficiency.  
 Therefore, we begin with several definitions and invariants before we identify the events and say how to handle them. 
 
 \section{Definitions}
@@ -60,14 +59,14 @@ Because segments can share endpoints, it is useful to introduce \textit{flags}:
 segment $pq$ has a \textit{start} flag at $p$ and \textit{terminal} flag at $q$, 
 which inherit the color, slope, and label from $pq$. 
 \jss{probably need notation for the flags of $pq$: could even use $p_q$ for start and $_pq$ for terminal.}
-%identifying flags in words may be cleaer since the flag point could be an intersection
+%identifying flags in words may be clearer since the flag point could be an intersection
 To compare flags, we compare the points, breaking ties so terminal flags precede starts, 
 lower segments precede higher segments (that is, slope is decreasing for terminal flags and increasing for start flags), and red precedes blue.
 %pic
 
-An intersection stores the two segments forming it.
-A intersection flag features the the intersection as the flag's point and one of the segments forming the intersection as the flag's segment.
-Note intersection flags cannot be ordered like normal flags, but both types can be referred to as falgs.
+An intersection stores the two segments forming it.  \jss{precision}
+A \texit{intersection flag} stores the intersection as the flag's point and one of the segments forming the intersection as the flag's segment.  
+Even though we refer to them as flags,  intersection flags are generated for output.  They do not need to be compared, which is fortunate, because doing so would require higher precision than we allow.
 
 \subsection{Sweep}\label{sec sweep}
 In the double-precision red/blue segment sweep algorithm~\cite{MS}, a flag will \textit{witness} the intersection of segments $s$ and $t$ if it is the smallest flag right of the wedge formed by the intersection of $s$ and $t$.
@@ -86,11 +85,13 @@ K., Iacono, and Langermann~\cite{}  point out that the sweep can be understood a
 %pseudoline section
 
 \subsection{Bundlelist}
-On the sweepline, there are sections where only blue segments intersect it and sections where only red segments intersect it. 
-The bundlelist is formed by grouping these segments among these regions.
-Each bundle contains only one color of segments, and the segments are consecutive increasing with respect to aboveness.
+The sweepline can be split into alternating sections crossed by blue or by red segments only.
+Each alternation is represented by a \textit{bundle}, which contains single color segments that are comparable, consecutive, and increasing with respect to aboveness.
+The \textit{bundlelist}
+ is formed by grouping these segments among these regions.
+Each bundle 
 %pic
-The bundlelist is then a linked list of bundles that supports swap, split, and merge of bundles; it also supports bundle search by using flags.
+The bundlelist is  a linked list of bundles that supports swap, split, and merge of bundles; it also supports bundle search by using flags.
 Swapping bundles can be easily done in a linked list.
 The segments of a bundle will be stored in a splay tree for amortized split time of $O(log(n))$ and amortized merge time of $O(log(m*n))$ where $m$, $n$ are total number of segments in the bundle.
 We also keep the red bundles in a splay tree ordered by aboveness (no intersection within a color, so ordering is defined) for binary search on the bundlelist with flags.
