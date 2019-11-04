@@ -9,6 +9,9 @@
 \author{Shengtan Mao, Jack Snoeyink}
 \date{\today}
 
+
+%pictures: fill in a small corner
+
 \begin{document}
 
 \maketitle
@@ -64,7 +67,7 @@ An \textit{intersection} consists of the two segments, one red and one blue, for
 We store the two segments since storing the actual point of intersection requires \sm{more than double} precision
 A \texit{intersection flag} consists of the intersection as the flag's point and one of the segments forming the intersection, and an indication of whether the intersection starts or terminates the segment.
 Intersections flags that share the same point are compared in the same manner as normal flags.
-We do not need to compare intersection flags in any other cases, which means explicit calculation of the intersection point is not needed/
+We do not need to compare intersection flags in any other cases, which means explicit calculation of the intersection point is not needed.
 
 
 \subsection{Pseudoline Sweep}\label{sec psweep}
@@ -74,6 +77,8 @@ A line sweeps across the plane, maintaining the order of these curves as alterna
 An event occurs at each flag, which may witness intersections between several bundles, as well as terminating or starting a segment.  
 The paper~\cite{MS} shows that bundles can be processed by split, swap, and merge in $O(n\lg n)$ total time, producing a concise description of all $k$ intersections, even if $k=\Theta(n^2)$.
 
+
+%partial grid column major
 We offer a pseudoline interpretation of the sweepline.
 The pseudoline passes through one flag (not intersection flag) or an intersection on each update.
 The pseudoline passes through flags in flag order.
@@ -103,7 +108,8 @@ Two flags are a \textit{terminal pair} if they are terminal flags that share the
 A terminal and a start flag are a \textit{move pair} if they share the same point, and their segments bound the same direction.
 An event pair is any type of pairs above.
 
-\subsection{Visible Segments}
+%boundary segments
+\subsection{Boundary Segments}
 If operation is union, a segment that bounds below is visible if the segment directly above it on the sweepline bounds above; a segment that bounds above is visible if the segment directly below it on the sweepline bounds below;
 If the operation is intersection, a segment is visible if the segment directly above is of the opposite color and bounds below and the segment directly below is of the opposite color and bounds above.
 %need to explain subtract blue
@@ -143,22 +149,27 @@ If a flag does not form an event pair with any other flag, we have observed an i
 This shows how the pbline moves past a point shared by two blue and two red vertices with intersection as the Boolean operation.
 
 \subsection{Boundary Cycles} \label{sec bcycle}
-Each \textit{boundary cycle} $b$ is an list of points with a pointer to the boundary cycle $c$ that contains $b$.
-The left side of the oriented segments formed by the $b$'s list is the insde of a polygon.
-$b$ is contained in $c$ if whenever the pseudoline intersects $b$, the top segment of $b$ is below the top segment of $c$, and the bottom segment of $b$ is above the bottom segment of $c$; and there exist a state of the pseudoline the top segment of $b$ is \textit{directly} below the top segment of $c$, and the bottom segment of $b$ is \textit{directly} above the bottom segment of $c$.
+A polygon $a$ is \textit{above} polygon $b$ if the segment directly above the point of $b$'s terminal flags is a segment that forms the boundary of $a$.
+A polygon $b$ is \textit{below} polygon $a$ if $b$ is above $a$.
+A polygon $c$ is a \textit{child} of $b$ if $b$ is above $c$ and the winding number of the point of $c$'s terminal flag with respect to $b$ is non-zero.
+A polygon $c$ is a \textit{sibling} of $b$ if $b$ is above $c$ and the winding number of the point of $c$'s terminal flag with respect to $b$ is zero.
+A \textit{boundary cycle} $B$ contains a polygon $b$, a pointer to the boundary cycle of the polygon above $b$, and a list of boundary cycles of the polygons that are below and children of $b$, and a list of boundary cycles of the polygons that are below siblings of $b$.
+The left side of the oriented segments formed by the $B$'s list is the insde of a polygon.
+%I am unsure how do determine if two polygons are parent and child or siblings.
+%checking orientation and interior at the rightmost point of the first completed polygon does not seem to be able to determine the relationship
+Each segment needs a pointer to the boundary cycle it contributed to.
+Note that because child and sibling require the winding number, we cannot differentiate between children and siblings below $b$before $b$ is completed; polygons below $b$ will be assumed to be children until $b$ is completed; we also do not know if two incomplete boundary cycles forms a single boundary cycles before they are completed.
 
-We keep track of all boundary cycles intersecting the pseudoline.
-When the pseudoline moves across a start pair, a new boundary cycle is added with a pointer to the boundary cycle containing the segment directly above the start pair.
-When the pseudoline moves across a terminal pair, a boundary cycle is finished or two boundary cycles are realized to be one; the pointer will be modified accordingly.
-When the pseudoline moves acorss a move pair, an existing boundary cycle gains additional points and its pointer is modified if necessary.
-Two boundary cycles may need to be merged, and its pointer may need to point to the containing boundary cycle of the current containing boundary cycle.
-Union-find data structure can efficiently store boundary cycles.
-Each segment also needs a pointer to the boundary cycle it contributed to.
 
 
 \subsection{Algorithm}
 We execute the segment intersection algorithm.
 Between every flag and every bundle swap we progress the bpline sweep and update the boundary cycles.
-Only the visible intersections of bundle swaps and visible flags will form the objects being swept over by the bpline.
-The boundary cycles will be updated with the visible flags, and finished boundary cycles will be recorded.
+The boundary after the Boolean operator form the objects being swept over by the bpline.
+The boundary cycles will be maintained as the bpline is updated.
+When the polygon of a boundary cycle $B$ finishes, we correct the children and sibilings below lists, set $B$'s' pointer to the boundary cycle, $A$, above $B$; then we add $B$ to the children below list of $A$.
+
+After the algorithm is completed, we store the polygons of the boundary cycles in a tree.
+Siblings of a polygon $b$ will share the same parent as $b$; children of $b$ will have $b$ as a parent.
+
 \end{document}
