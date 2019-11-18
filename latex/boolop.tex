@@ -16,8 +16,7 @@
 
 \maketitle
 \begin{abstract}
-We detail an implementation of regularized Boolean operations (union, intersection, difference) for two polygonal regions in the plane that produces polygons of the resulting region.
-The polygons are organized in a tree with respect to their nesting.
+We detail an implementation of regularized Boolean operations (union, intersection, difference) on two polygonal regions in the plane that produces simple oriented polygon with nesting representing the resulting region.
 It is based on an optimal red/blue segment intersection algorithm that requires only double the input precision.  
 We carefully define predicates so that we do not need to define shared endpoints or overlapping segments as degeneracies requiring special handling, but can fold them into the general case.  
 %Output can be produced in compact forms.  
@@ -53,9 +52,9 @@ Therefore, we begin with several definitions and invariants before we identify t
 Points in the plane are compared by lexicographic order, breaking ties in $x$ coordinates by comparing $y$ coordinates.
 
 \subsection{Segments, Flags, Intersections}
-A \textit{segment} consists of two endpoints $p<q$, a color (red or blue), and
-an \textit{orientation}.
-If the orientation is positive the segment bounds the region to its left; if the orientation is negative the segment bounds the region to its right;
+A \textit{segment} consists of two endpoints $p<q$, a color (red or blue), and an \textit{orientation}.
+The orientation is a vector built from $p$ and $q$; the orientation is positive for vector $pq$  and negative for vector $qp$.
+The segment bounds the region to the left of the oreintation.
 We assume that segment endpoints are represented exactly in {\it input precision}.
 We assume the relative interior of any segment $pr$ does not contain an endpoint $q$ of another segment.
 Note the algorithm can process the equivalent formation of $pr$ broken into $pq$ and $qr$.
@@ -116,6 +115,13 @@ If the operation is intersection, a segment is visible if the segment directly a
 %need to explain subtract blue
 Visible flags are flags containing visible segments, and visible intersections are intersections containing visible segments.
 
+\subsection{Simple Oriented Polygon}
+A group of oriented segments is \textit{consistent} at a point if every oriented segments directed into the point is directed out on the next oriented segment and if every oriented segments directed out of the point is directed in on the previous oriented segment.
+Next and previous here uses counter-clockwise order.
+
+A \textit{simple oriented polygon} (SOP) is a ordered list of points $p_0,p_1,..,p_{n-1}$.
+The points represent oriented segments $s_i=p_ip_{i+1 mod n}$ that are consistent at every point $p_0,p_1,..,p_{n-1}$.
+
 \section{Segment Intersection Algorithm} \label{sec inter}
 The input is two groups, red and blue, of segments; we require no segments intersect each other within a group and no segment has an endpoint inside another segment.
 This algorithm outputs all the intersections in the order they are passed by the pseudoline.
@@ -158,18 +164,20 @@ Pbline maintains boundary segments as a linked list of segments and is not a bun
 %if not record it as child
 
 
-\subsection{Boundary Cycles} \label{sec bcycle}
-A polygon $a$ is \textit{above} polygon $b$ if the segment directly above the point of $b$'s terminal flags is a segment that forms the boundary of $a$.
-A polygon $b$ is \textit{below} polygon $a$ if $b$ is above $a$.
-A polygon $c$ is a \textit{child} of $b$ if $b$ is above $c$ and the winding number of the point of $c$'s terminal flag with respect to $b$ is non-zero.
-A polygon $c$ is a \textit{sibling} of $b$ if $b$ is above $c$ and the winding number of the point of $c$'s terminal flag with respect to $b$ is zero; this means 
-A \textit{boundary cycle} $B$ contains a polygon $b$, a pointer to the boundary cycle of the polygon above $b$, and a list of boundary cycles of the polygons that are below and children of $b$, and a list of boundary cycles of the polygons that are below and siblings of $b$.
-The left side of the oriented segments formed by the $B$'s list is the insde of a polygon.
+\subsection{Boundary Component} \label{sec bcycle}
+A SOP $a$ is \textit{above} SOP $b$ if the segment directly above the point of $b$'s terminal flags is a segment that forms the boundary of $a$.
+A SOP $a$ is \textit{inside} SOP $b$ if $a$ is above $b$ and the segment associated with determining aboveness bounds the region above.
+A SOP $a$ is \textit{outside} SOP $b$ if $a$ is above $b$ and the segment associated with determining aboveness bounds the region below.
 
-Each segment needs a pointer to the boundary cycle it contributed to.
-When a boundary cycle $B$'s polygon is complete at flag $f$, we can determine if it is a child or sibling of its above boundary cycle $A$ by using the stabbing line.
-Starting at $f$ and following the pbline upwards, we count how many times the pbline intersects the polygon of $A$.
-If the pbline intersects $A$'s polygon an even number of times, $B$ is a sibling of $A$; if the pbline intersects $A$'s polygon an odd number of times, $B$ is a child of $A$.
+A \textit{boundary component} $B$ is a SOP $b$, inside and below (IB) pointer, and outside and below (OB) pointer.
+The convention is using capitalized letter to represent boundary component and lower case to represent the corresponding SOP.
+Note that by following the sequence of pointers, a linked list is formed.
+We refer to $B$'s \textit{IB linked list} (IBLL) by continuing follow the IB's starting at $B$; we refer to $B$'s \textit{OB linked list} (OBLL) by continuing follow the OB's starting at $B$
+The pointers of a $B$ are organized so that when $b$ is completed, traversing the OBLL or the IBLL will give the SOPs nested inside $b$, and traversing the other linked list will give the SOPs that are neighbors to $b$.
+The pointers of the collection of boundary components are updated whenever a boundary component $B$'s SOP $b$ is completed.
+If $a$ is above and inside $b$, $A$'s IB will point to $B$, and $A$'s original IB will be attached to the end $B$'s IBLL.
+If $a$ is above and outside $b$, $A$'s OB will point to $B$, and $A$'s original OB will be attached to the end $B$'s OBLL.
+
 
 
 
