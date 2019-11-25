@@ -165,30 +165,42 @@ Pbline maintains boundary segments as a linked list of segments and is not a bun
 
 
 \subsection{Boundary Component} \label{sec bcycle}
-A SOP $a$ is \textit{above} SOP $b$ if the segment directly above the point of $b$'s terminal flags is a segment that forms the boundary of $a$.
-A SOP $a$ is \textit{inside} SOP $b$ if $a$ is above $b$ and the segment associated with determining aboveness bounds the region above.
-A SOP $a$ is \textit{outside} SOP $b$ if $a$ is above $b$ and the segment associated with determining aboveness bounds the region below.
+A SOP is \textit{below} a segment if the rightmost point of the SOP is directly below the segment; in this situation the segment is also said to be \textit{above} the SOP.
+A \textit{connected component} is a connected segment of the SOP.
+A SOP is \textit{below inside} a connected component if the segment above the SOP is contained in the connected component and the segement bounds the region below.
+A SOP is \textit{below outside} a connected component if the segment above the SOP is contained in the connected component and the segement bounds the region above.
+We can construct two below trees of SOPs; one from below inside relation and the other from below outside relation.
+The below trees are indeed trees since boundary segments do not cross.
+The sentinel segment at the top of the plane represents the "infinite" boundary component and is the root of both trees.
+To record the information needed for both trees, we need to keep track of SOPs below inside and below outside a connected component.
+A \textit{boundary component} is a connected component along with the SOPs inside it and the SOPs outside it.
 
-A \textit{boundary component} $B$ is a SOP $b$, inside and below (IB) pointer, and outside and below (OB) pointer.
-The convention is using capitalized letter to represent boundary component and lower case to represent the corresponding SOP.
-Note that by following the sequence of pointers, a linked list is formed.
-We refer to $B$'s \textit{IB linked list} (IBLL) by continuing follow the IB's starting at $B$; we refer to $B$'s \textit{OB linked list} (OBLL) by continuing follow the OB's starting at $B$
-The pointers of a $B$ are organized so that when $b$ is completed, traversing the OBLL or the IBLL will give the SOPs nested inside $b$, and traversing the other linked list will give the SOPs that are neighbors to $b$.
-The pointers of the collection of boundary components are updated whenever a boundary component $B$'s SOP $b$ is completed.
-If $a$ is above and inside $b$, $A$'s IB will point to $B$, and $A$'s original IB will be attached to the end $B$'s IBLL.
-If $a$ is above and outside $b$, $A$'s OB will point to $B$, and $A$'s original OB will be attached to the end $B$'s OBLL.
+We maintain the trees through the bpline sweep.
+If the bpline passed over a start pair, a new boundary component is started with the three points as the connected component.
+If the bpline passed over a move pair, an existing boundary component's connected component is updated with the new points.
+If the bpline passed over a terminal pair, there are two subcases.
+If the terminal pair finishes a connected component, we complete the boundary component's connected component and determine the segment above it.
+Let this boundary component be $B$ and the boundary component containing the segment above $B$ be $A$; we determine if $B$ is below inside or below outside $A$ and update $A$ accordingly.
+If the terminal pair does not finish a connected component, then it indicates two connected components are from the same SOP, so we need to merge two boundary components.
+We have to update and merge the two connected components, the two collections of below inside SOPs, and the two collections of below outside SOPs.
+By examining these cases, we can design a suitable structure for boundary components.
+The boundary component structure should have a linked list of points for its connected components, a linked list of boundary components for all the below inside SOPs, and a linked list of boundary components for all the below outside SOPs.
+We need pointers to the head and tail too all three linked lists for merging in $O(1)$ time.
+
+
+\subsection{Nesting Tree}
+A SOP's \textit{neutral orientation} is the orientation such that the direction through the rightmost point is counter clockwise.
+SOP $B$ is \textit{nested} in SOP $A$ if $B$ with neutral orientation is contained in $A$ with neutral orientation.
+SOP $B$ is \textit{directly nested} in SOP $A$ if $B$ is nested in $A$ such that no SOP $C$ nested in $A$ has $B$ nested in $C$.
+From the below inside tree adn below outside tree, we can construct a tree of SOPs from nesting relations; this tree likewise have the "infinite" boundary component as root.
+Given a completed boundary component $B$, if its SOP's orientation agrees with the SOP's neutral orientation, every boundary component in the below inside subtree of $B$ is directly nested in $B$.
+if its SOP's orientation does not agree with the SOP's neutral orientation, every boundary component in the below outside subtree of $B$ is directly nested in $B$.
+The boundary components directly nested in $B$ are added as $B$'s children in the nesting tree, and the nesting tree is updated whenever the sweep passes over a terminal pair that finishes a connected component.
 
 
 
 
 \subsection{Algorithm}
-We execute the segment intersection algorithm.
-Between every flag and every bundle swap we progress the bpline sweep and update the boundary cycles.
-The resulting boundary of the Boolean operator forms the objects being swept over by the bpline.
-The boundary cycles will be maintained as the bpline is updated.
-When the polygon of a boundary cycle $B$ finishes, we looked at set $B$'s pointer to the boundary cycle, $A$, above $B$; we add $B$ to the children below list of $A$.
-For a child $C$ below $B$, every boundary cycle in the subtree of $C$ formed with respect to sibling below is a child of $B$.
-Doing this for every child of $B$ allows us to construct the tree of polygons with respect to nesting.
-We then delete the list of children below of $B$ but keep the list of siblings below since future boundary cycles may need to access it.
+
 
 \end{document}
