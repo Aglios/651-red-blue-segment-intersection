@@ -146,16 +146,17 @@ This series of pictures shows how the pseudoline moves past the second bundle sw
 \section{Boolean Ooperation Algorithm}
 \subsection{Pseudoline Sweep} \label{sec psweep2}
 We define the \textit{Boolean-pseudoline} (bpline) sweep, which is a modification of the pseudoline sweep in (\ref{sec psweep}).
+The bpline is intended to only sweep over the boundary segments, which do not intersect each other.
 The bpline moves through one event pair at each update.
-Flags are processed in flag order and the bpline moves through an event pair whenever two flags are verified to form one.
+Flags are examined in flag order and the bpline moves through an event pair whenever two flags are verified to form one.
 We examine intersections in the same order as the pseudoline.
 Each intersection has four intersection flags sharing the same point, and the bpline moves through the intersection flags in the same way as normal flags.
 Note that a move pair need not be consecutive in flag order; this means we need to store flags that do not immediately form an event pair with another flag.
-If a flag does not form an event pair with any other flag, we have observed an inconsistency in the orientation of the input polygons regions and report an error.
+Once a stored flag forms an event pair with the current flag, we process the two flags consecutively.
+If a stored flag does not form an event pair with any other flag, we have observed an inconsistency in the orientation of the input polygons regions and report an error.
 %pic
 This shows how the pbline moves past a point shared by two blue and two red vertices with intersection as the Boolean operation.
-
-Pbline maintains boundary segments as a linked list of segments and is not a bundlelist because pbline will not observe intersection and do not need to swap the order of any two segments.
+Further details are discussed later in this paper.
 
 
 
@@ -197,8 +198,17 @@ Given a completed boundary component $B$, if its SOP's orientation agrees with t
 if its SOP's orientation does not agree with the SOP's neutral orientation, every boundary component in the below outside subtree of $B$ is directly nested in $B$.
 The boundary components directly nested in $B$ are added as $B$'s children in the nesting tree, and the nesting tree is updated whenever the sweep passes over a terminal pair that finishes a connected component.
 
-
-
+\subsection{Pseudoline Sweep 2}
+%how to determine which boundary to modify given a flag
+%the segments intersecting the sweepline need pointers to the boundary components it belongs to
+%this pointer is stored in the node of the tree used to keep track of segments intersecting the sweepline
+%for a new flag, determine witch segment intersecting the sweepline it connects to, and use that pointer to determine wwhat the new flag segment points to
+We provide more details on how the bpline maintains segments along with their pointers to boundary components.
+Because the bpline intends to sweep over boundary segments, which do not intersect each other, the segments intersecting the bpline can be stored in a balanced binary tree.
+Given a segment intersecting the pbline, we need to access the boundary component with the connected compoent that contains the segment.
+Therefore, each node in the bpline's tree has to store a pointer to the segment's boundary component.
+Recall that the bpline sweeps over an event pair, which is two flags, at every update, and we need to remember flags that are not yet paired off.
+We need to remember the segments' pointers to the boundary component as well to maintain the bpline.
 
 \subsection{Algorithm}
 
