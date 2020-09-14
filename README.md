@@ -1,4 +1,4 @@
-# 651-red-blue-segment-intersection
+# Boolean-Operations
 Shengtan Mao
 
 ### Project description
